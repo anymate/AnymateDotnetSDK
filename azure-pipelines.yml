@@ -25,7 +25,6 @@ steps:
     versioningScheme: byPrereleaseNumber
     buildProperties: 'outputType=Library'
 
-steps:
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: dotnet_lib_drop'
   inputs:
