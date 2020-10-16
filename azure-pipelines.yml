@@ -1,0 +1,32 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: 'vs2017-win2016'
+
+steps:
+- task: NuGetCommand@2
+  displayName: 'NuGet restore'
+
+- task: VSBuild@1
+  displayName: 'Build solution **\*.sln'
+  inputs:
+    vsVersion: 15.0
+    
+- task: NuGetCommand@2
+  displayName: 'NuGet pack'
+  inputs:
+    command: pack
+    versioningScheme: byPrereleaseNumber
+    buildProperties: 'outputType=Library'
+
+steps:
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: dotnet_lib_drop'
+  inputs:
+    ArtifactName: 'dotnet_lib_drop'
