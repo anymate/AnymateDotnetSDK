@@ -10,25 +10,23 @@ pool:
   vmImage: 'vs2017-win2016'
 
 steps:
-- task: NuGetCommand@2
-  displayName: 'NuGet restore'
+- task: DotNetCoreCLI@2
+  displayName: "restore"
   inputs:
-    command: restore
-
-- task: VSBuild@1
-  displayName: 'Build solution **\*.csproj'
+    command: 'restore'
+    projects: '**/*.csproj'
+    feedsToUse: 'select'
+- task: DotNetCoreCLI@2
+  displayName: "build"
   inputs:
-    vsVersion: 15.0
-    solution: '**/*.csproj'
-
-    
-- task: NuGetCommand@2
-  displayName: 'NuGet pack'
+    command: 'build'
+    projects: '**/*.csproj'
+- task: DotNetCoreCLI@2
+  displayName: "pack"
   inputs:
-    command: pack
-    versioningScheme: byPrereleaseNumber
-    buildProperties: 'outputType=Library'
-
+    command: 'pack'
+    packagesToPack: '**/*.csproj'
+    versioningScheme: 'off'
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: dotnet_lib_drop'
   inputs:
