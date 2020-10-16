@@ -13,13 +13,10 @@ steps:
 - task: NuGetCommand@2
   displayName: 'NuGet restore'
 
-#- task: VSBuild@1
-#  displayName: 'Build solution **\*.sln'
-#  inputs:
-#    vsVersion: 15.0
-- task: MSBuild@1
-  displayName: 'Build solution **/*.csproj'
+- task: VSBuild@1
+  displayName: 'Build solution **\*.csproj'
   inputs:
+    vsVersion: 15.0
     solution: '**/*.csproj'
 
     
