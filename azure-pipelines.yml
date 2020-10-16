@@ -12,6 +12,8 @@ pool:
 steps:
 - task: NuGetCommand@2
   displayName: 'NuGet restore'
+  inputs:
+    command: restore
 
 - task: VSBuild@1
   displayName: 'Build solution **\*.csproj'
