@@ -17,6 +17,11 @@ steps:
 #  displayName: 'Build solution **\*.sln'
 #  inputs:
 #    vsVersion: 15.0
+- task: MSBuild@1
+  displayName: 'Build solution **/*.csproj'
+  inputs:
+    solution: '**/*.csproj'
+
     
 - task: NuGetCommand@2
   displayName: 'NuGet pack'
