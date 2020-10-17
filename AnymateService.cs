@@ -18,17 +18,54 @@ namespace Anymate
         private static string OnPremisesApiUrl { get; set; }
         private static string OnPremisesAuthUrl { get; set; }
         private bool OnPremisesMode { get; set; } = false;
+        private AuthTokenRequest _request { get; set; } = new AuthTokenRequest();
+
+        public string AccessToken
+        {
+            get => _request.access_token;
+            set => _request.access_token = value;
+        }
+
+        public bool HasAuthCredentials => AuthTokenRequestIsValid();
+
+        private bool AuthTokenRequestIsValid()
+        {
+            if (_request == null)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(_request.client_id))
+                return false;
+
+            if (string.IsNullOrWhiteSpace(_request.client_secret))
+                return false;
+            
+            if (string.IsNullOrWhiteSpace(_request.password))
+                return false;
+
+            if (string.IsNullOrWhiteSpace(_request.username))
+                return false;
 
 
+            return true;
+        }
+        
         /// <summary>
         /// This is the default way of using the AnymateClient. It assumes you are using the cloud version of Anymate.
         /// </summary>
         /// <remarks>
         /// No need for any further configuration, as the Anymate Client automatically will setup itself once you log in.
         /// </remarks>
-        public AnymateService()
+        public AnymateService(string customerKey, string secret, string username, string password)
         {
             OnPremisesMode = false;
+            _request = new AuthTokenRequest()
+            {
+                client_id = customerKey,
+                client_secret = secret,
+                password = password,
+                username = username
+            };
+            GetOrRefreshAccessToken();
         }
 
 
@@ -40,9 +77,17 @@ namespace Anymate
         /// </remarks>
         /// <param name="clientUri">The url for the anymate client installation. Url should just be the domain with http/https in front, similar to "https://customer.anymate.app"</param>
         /// <param name="authUri">The url for the anymate auth server installation. Url should just be the domain with http/https in front, similar to "https://customer.auth.anymate.app"</param>
-        public AnymateService(string clientUri, string authUri)
+        public AnymateService(string customerKey, string secret, string username, string password, string clientUri,
+            string authUri)
         {
             OnPremisesMode = true;
+            _request = new AuthTokenRequest()
+            {
+                client_id = customerKey,
+                client_secret = secret,
+                password = password,
+                username = username
+            };
             clientUri = clientUri.Trim();
             if (clientUri.EndsWith("/"))
                 clientUri = clientUri.Substring(0, clientUri.Length - 1);
@@ -53,6 +98,7 @@ namespace Anymate
 
             OnPremisesApiUrl = clientUri;
             OnPremisesAuthUrl = authUri;
+            GetOrRefreshAccessToken();
         }
 
         private string GetAnymateUrl(string customerKey)
@@ -66,6 +112,7 @@ namespace Anymate
                 return AnymateUrl(customerKey);
             }
         }
+
         private string GetAuthUrl(string customerKey)
         {
             if (OnPremisesMode)
@@ -88,14 +135,6 @@ namespace Anymate
             return values;
         }
 
-        private Dictionary<string, string> GetFormDataRefreshAuth(AuthTokenRequest request)
-        {
-            var values = CreateFormData(request);
-            values.Add("grant_type", "refresh_token");
-            values.Add(nameof(request.refresh_token), request.refresh_token);
-            return values;
-        }
-
         private Dictionary<string, string> CreateFormData(AuthTokenRequest request)
         {
             var values = new Dictionary<string, string>();
@@ -105,114 +144,46 @@ namespace Anymate
             return values;
         }
 
-        public AuthResponse RefreshAccessTokenIfNeeded(string access_token, string refresh_token, string customerKey, string secret)
+        private void GetOrRefreshAccessToken()
         {
-            var request = new AuthTokenRequest()
-            {
-                access_token = access_token,
-                refresh_token = refresh_token,
-                client_id = customerKey,
-                client_secret = secret
-            };
-            return RefreshAccessTokenIfNeeded(request);
+            var result =  GetOrRefreshAccessToken(_request);
+            if(!result.Succeeded)
+                throw new Exception($"Could not authenticate. Got message: {result.HttpMessage}");
         }
 
-        public AuthResponse RefreshAccessTokenIfNeeded(AuthTokenRequest request)
+        private AuthResponse GetOrRefreshAccessToken(AuthTokenRequest request)
         {
-            var access_token = request.access_token;
-            if (!TokenValidator.RefreshNotNeeded(access_token))
-            {
-                return new AuthResponse()
-                {
-                    access_token = request.access_token,
-                    refresh_token = request.refresh_token,
-                    Succeeded = true
-                };
-            }
-            else
-            {
-                if (string.IsNullOrWhiteSpace(request.client_id)) throw new ArgumentNullException("client_id was null.");
-                if (string.IsNullOrWhiteSpace(request.client_secret)) throw new ArgumentNullException("client_secret was null.");
-                if (string.IsNullOrEmpty(request.refresh_token)) throw new ArgumentNullException("refresh_token was null.");
-
-                var token = GetAuthTokenRefreshFlow(request);
-                return token;
-
-            }
-        }
-
-        public AuthResponse GetOrRefreshAccessToken(string refresh_token, string customerKey, string secret, string access_token = null)
-        {
-            var request = new AuthTokenRequest()
-            {
-                access_token = access_token,
-                username = null,
-                password = null,
-                refresh_token = refresh_token,
-                client_id = customerKey,
-                client_secret = secret
-            };
-            return GetOrRefreshAccessToken(request);
-        }
-        public AuthResponse GetOrRefreshAccessToken(string username, string password, string customerKey, string secret, string access_token = null)
-        {
-            var request = new AuthTokenRequest()
-            {
-                access_token = access_token,
-                refresh_token = null,
-                username = username,
-                password = password,
-                client_id = customerKey,
-                client_secret = secret
-            };
-            return GetOrRefreshAccessToken(request);
-        }
-
-        public AuthResponse GetOrRefreshAccessToken(AuthTokenRequest request)
-        {
-            var access_token = request.access_token;
-            if (string.IsNullOrWhiteSpace(access_token) || !TokenValidator.RefreshNotNeeded(access_token))
+         
+            if (string.IsNullOrWhiteSpace(request.access_token) || !TokenValidator.RefreshNotNeeded(request.access_token))
             {
                 if (string.IsNullOrWhiteSpace(request.client_id))
                     throw new ArgumentNullException("client_id was null.");
                 if (string.IsNullOrWhiteSpace(request.client_secret))
                     throw new ArgumentNullException("client_secret was null.");
 
-                if (string.IsNullOrEmpty(request.refresh_token))
+
+                if (string.IsNullOrWhiteSpace(request.password) || string.IsNullOrWhiteSpace(request.username))
                 {
-                    if (string.IsNullOrWhiteSpace(request.password) || string.IsNullOrWhiteSpace(request.username))
-                    {
-                        throw new ArgumentNullException("Found no refresh token and either username or password were empty.");
-                    }
-                    var token = GetAuthTokenPasswordFlow(request);
-                    return token;
+                    throw new ArgumentNullException(
+                        "Found no refresh token and either username or password were empty.");
                 }
-                else
-                {
-                    var token = GetAuthTokenRefreshFlow(request);
-                    return token;
-                }
+
+                var token = GetAuthTokenPasswordFlow(request);
+                return token;
             }
             else
             {
                 return new AuthResponse()
                 {
-                    access_token = request.access_token,
-                    refresh_token = request.refresh_token,
+                    access_token = _request.access_token,
                     Succeeded = true
                 };
             }
         }
 
-        public AuthResponse GetAuthTokenPasswordFlow(AuthTokenRequest request)
+        private AuthResponse GetAuthTokenPasswordFlow(AuthTokenRequest request)
         {
             var formData = GetFormDataPasswordAuth(request);
-            return GetAuthToken(formData, request.client_id);
-        }
-
-        public AuthResponse GetAuthTokenRefreshFlow(AuthTokenRequest request)
-        {
-            var formData = GetFormDataRefreshAuth(request);
             return GetAuthToken(formData, request.client_id);
         }
 
@@ -227,7 +198,8 @@ namespace Anymate
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 client.Timeout = TimeSpan.FromMinutes(5);
-                using (HttpResponseMessage response = AsyncUtil.RunSync(() => client.PostAsync($"{GetAuthUrl(customerKey)}/connect/token", content)))
+                using (HttpResponseMessage response = AsyncUtil.RunSync(() =>
+                    client.PostAsync($"{GetAuthUrl(customerKey)}/connect/token", content)))
                 {
                     using (HttpContent responseContent = response.Content)
                     {
@@ -236,15 +208,15 @@ namespace Anymate
                             string data = AsyncUtil.RunSync(() => responseContent.ReadAsStringAsync());
                             var json = JsonConvert.DeserializeObject<AuthResponse>(data);
                             json.HttpMessage = $"{response.StatusCode} - {response.ReasonPhrase}";
+                            _request.access_token = json.access_token;
                             return json;
                         }
                         else
                         {
-
                             var result = AuthResponse.Failed;
                             result.HttpMessage = $"{response.StatusCode} - {response.ReasonPhrase}";
+                            _request.access_token = string.Empty;
                             return result;
-
                         }
                     }
                 }
@@ -256,7 +228,8 @@ namespace Anymate
         {
             var handler = new JwtSecurityTokenHandler();
             var jsonToken = handler.ReadToken(access_token) as JwtSecurityToken;
-            var customerKey = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "auth.anymate.app/CustomerKey").Value;
+            var customerKey = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "auth.anymate.app/CustomerKey")
+                .Value;
 
             if (string.IsNullOrWhiteSpace(customerKey))
                 throw new Exception("Token invalid");
@@ -264,17 +237,19 @@ namespace Anymate
             return customerKey;
         }
 
-        private string CallApiPost(string access_token, string endpoint, string jsonPayload)
+        private string CallApiPost(string endpoint, string jsonPayload)
         {
-            var customerKey = GetCustomerKeyFromToken(access_token);
+            GetOrRefreshAccessToken();
+            var customerKey = GetCustomerKeyFromToken(_request.access_token);
             var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access_token);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _request.access_token);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 client.Timeout = TimeSpan.FromMinutes(5);
-                using (HttpResponseMessage response = AsyncUtil.RunSync(() => client.PostAsync(GetAnymateUrl(customerKey) + endpoint, content)))
+                using (HttpResponseMessage response = AsyncUtil.RunSync(() =>
+                    client.PostAsync(GetAnymateUrl(customerKey) + endpoint, content)))
                 using (HttpContent responseContent = response.Content)
                 {
                     string data = AsyncUtil.RunSync(() => responseContent.ReadAsStringAsync());
@@ -284,16 +259,18 @@ namespace Anymate
         }
 
 
-        private string CallApiGet(string access_token, string endpoint)
+        private string CallApiGet(string endpoint)
         {
-            var customerKey = GetCustomerKeyFromToken(access_token);
+            GetOrRefreshAccessToken();
+            var customerKey = GetCustomerKeyFromToken(_request.access_token);
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access_token);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _request.access_token);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 client.Timeout = TimeSpan.FromMinutes(5);
-                using (HttpResponseMessage response = AsyncUtil.RunSync(() => client.GetAsync(GetAnymateUrl(customerKey) + endpoint)))
+                using (HttpResponseMessage response =
+                    AsyncUtil.RunSync(() => client.GetAsync(GetAnymateUrl(customerKey) + endpoint)))
                 using (HttpContent responseContent = response.Content)
                 {
                     string data = AsyncUtil.RunSync(() => responseContent.ReadAsStringAsync());
@@ -303,294 +280,288 @@ namespace Anymate
         }
 
 
-
-
-        public AnymateResponse Failure(string access_token, string payload)
+        public AnymateResponse Failure(string payload)
         {
-            return Failure<AnymateResponse>(access_token, payload);
+            return Failure<AnymateResponse>(payload);
         }
 
-        public TResponse Failure<TResponse>(string access_token, string payload)
+        public TResponse Failure<TResponse>(string payload)
         {
             var endpoint = $"/apimate/Failure/";
-            var response = CallApiPost(access_token, endpoint, payload);
+            var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
-        public AnymateResponse Failure(string access_token, AnymateProcessFailure action)
+        public AnymateResponse Failure(AnymateProcessFailure action)
         {
-            return Failure<AnymateProcessFailure>(access_token, action);
+            return Failure<AnymateProcessFailure>(action);
         }
 
-        public AnymateResponse Failure<T>(string access_token, T action)
+        public AnymateResponse Failure<T>(T action)
         {
-            return Failure<AnymateResponse, T>(access_token, action);
+            return Failure<AnymateResponse, T>(action);
         }
 
-        public TResponse Failure<TResponse, TAction>(string access_token, TAction action)
+        public TResponse Failure<TResponse, TAction>(TAction action)
         {
             var payload = JsonConvert.SerializeObject(action);
-            return Failure<TResponse>(access_token, payload);
+            return Failure<TResponse>(payload);
         }
 
 
-
-
-
-
-
-
-
-        public AnymateResponse FinishRun(string access_token, string payload)
+        public AnymateResponse FinishRun(string payload)
         {
-            return FinishRun<AnymateResponse>(access_token, payload);
+            return FinishRun<AnymateResponse>(payload);
         }
 
-        public TResponse FinishRun<TResponse>(string access_token, string payload)
+        public TResponse FinishRun<TResponse>(string payload)
         {
             var endpoint = $"/apimate/FinishRun/";
-            var response = CallApiPost(access_token, endpoint, payload);
+            var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
-        public AnymateResponse FinishRun(string access_token, AnymateFinishRun action)
+        public AnymateResponse FinishRun(AnymateFinishRun action)
         {
-            return FinishRun<AnymateFinishRun>(access_token, action);
+            return FinishRun<AnymateFinishRun>(action);
         }
 
-        public AnymateResponse FinishRun<T>(string access_token, T action)
+        public AnymateResponse FinishRun<T>(T action)
         {
-            return FinishRun<AnymateResponse, T>(access_token, action);
+            return FinishRun<AnymateResponse, T>(action);
         }
 
-        public TResponse FinishRun<TResponse, TAction>(string access_token, TAction action)
+        public TResponse FinishRun<TResponse, TAction>(TAction action)
         {
             var payload = JsonConvert.SerializeObject(action);
-            return FinishRun<TResponse>(access_token, payload);
+            return FinishRun<TResponse>(payload);
         }
 
-        public AnymateRunResponse StartOrGetRun(string access_token, string processKey)
+        public AnymateRunResponse StartOrGetRun(string processKey)
         {
-            return StartOrGetRun<AnymateRunResponse>(access_token, processKey);
+            return StartOrGetRun<AnymateRunResponse>(processKey);
         }
 
-        public T StartOrGetRun<T>(string access_token, string processKey)
+        public T StartOrGetRun<T>(string processKey)
         {
             var endpoint = $"/apimate/StartOrGetRun/{processKey}";
-            var response = CallApiGet(access_token, endpoint);
+            var response = CallApiGet(endpoint);
             return JsonConvert.DeserializeObject<T>(response);
         }
 
-        public T OkToRun<T>(string access_token, string processKey)
+        public T OkToRun<T>(string processKey)
         {
             var endpoint = $"/apimate/OkToRun/{processKey}";
-            var response = CallApiGet(access_token, endpoint);
+            var response = CallApiGet(endpoint);
             return JsonConvert.DeserializeObject<T>(response);
         }
 
-        public AnymateOkToRun OkToRun(string access_token, string processKey)
+        public AnymateOkToRun OkToRun(string processKey)
         {
-            return OkToRun<AnymateOkToRun>(access_token, processKey);
+            return OkToRun<AnymateOkToRun>(processKey);
         }
 
-        public T GetVariables<T>(string access_token, string processKey)
+        public T GetVariables<T>(string processKey)
         {
-            var jsonResult = GetVariables(access_token, processKey);
+            var jsonResult = GetVariables(processKey);
             var result = JsonConvert.DeserializeObject<T>(jsonResult);
             return result;
         }
 
-        public string GetVariables(string access_token, string processKey)
+        public string GetVariables(string processKey)
         {
             var endpoint = $"/apimate/GetRules/{processKey}";
-            return CallApiGet(access_token, endpoint);
+            return CallApiGet(endpoint);
         }
 
 
-        public T GetRules<T>(string access_token, string processKey)
+        public T GetRules<T>(string processKey)
         {
-            var jsonResult = GetVariables(access_token, processKey);
+            var jsonResult = GetVariables(processKey);
             var result = JsonConvert.DeserializeObject<T>(jsonResult);
             return result;
         }
 
-        public string GetRules(string access_token, string processKey)
+        public string GetRules(string processKey)
         {
             var endpoint = $"/apimate/GetRules/{processKey}";
-            return CallApiGet(access_token, endpoint);
+            return CallApiGet(endpoint);
         }
-        public string TakeNext(string access_token, string processKey)
+
+        public string TakeNext(string processKey)
         {
             var endpoint = $"/apimate/TakeNext/{processKey}";
-            return CallApiGet(access_token, endpoint);
+            return CallApiGet(endpoint);
         }
-        public T TakeNext<T>(string access_token, string processKey)
+
+        public T TakeNext<T>(string processKey)
         {
-            var jsonResult = TakeNext(access_token, processKey);
+            var jsonResult = TakeNext(processKey);
             var result = JsonConvert.DeserializeObject<T>(jsonResult);
             return result;
         }
 
-        public AnymateResponse CreateTask<T>(string access_token, T newTask, string processKey)
+        public AnymateResponse CreateTask<T>(T newTask, string processKey)
         {
-            return CreateTask<AnymateResponse, T>(access_token, newTask, processKey);
+            return CreateTask<AnymateResponse, T>(newTask, processKey);
         }
 
-        public TResponse CreateTask<TResponse, TModel>(string access_token, TModel newTask, string processKey)
+        public TResponse CreateTask<TResponse, TModel>(TModel newTask, string processKey)
         {
             var payload = JsonConvert.SerializeObject(newTask);
-            return CreateTask<TResponse>(access_token, payload, processKey);
+            return CreateTask<TResponse>(payload, processKey);
         }
 
-        public TResponse CreateTask<TResponse>(string access_token, string payload, string processKey)
+        public TResponse CreateTask<TResponse>(string payload, string processKey)
         {
             var endpoint = $"/apimate/CreateTask/{processKey}";
-            var response = CallApiPost(access_token, endpoint, payload);
+            var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
-        public AnymateResponse UpdateTask<T>(string access_token, T updateTask)
+        public AnymateResponse UpdateTask<T>(T updateTask)
         {
-            return UpdateTask<AnymateResponse, T>(access_token, updateTask);
+            return UpdateTask<AnymateResponse, T>(updateTask);
         }
 
-        public TResponse UpdateTask<TResponse>(string access_token, string payload)
+        public TResponse UpdateTask<TResponse>(string payload)
         {
             var endpoint = $"/apimate/UpdateTask/";
-            
-            var response = CallApiPost(access_token, endpoint, payload);
+
+            var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
-        public TResponse UpdateTask<TResponse, TUpdate>(string access_token, TUpdate updateTask)
+        public TResponse UpdateTask<TResponse, TUpdate>(TUpdate updateTask)
         {
             var payload = JsonConvert.SerializeObject(updateTask);
-            return UpdateTask<TResponse>(access_token, payload);
+            return UpdateTask<TResponse>(payload);
         }
 
-        public string CreateAndTakeTask<T>(string access_token, T newTask, string processKey)
+        public string CreateAndTakeTask<T>(T newTask, string processKey)
         {
             var payload = JsonConvert.SerializeObject(newTask);
-            return CreateAndTakeTask(access_token, payload, processKey);
+            return CreateAndTakeTask(payload, processKey);
         }
-        public string CreateAndTakeTask(string access_token, string payload, string processKey)
+
+        public string CreateAndTakeTask(string payload, string processKey)
         {
             var endpoint = $"/apimate/CreateAndTakeTask/{processKey}";
-            var response = CallApiPost(access_token, endpoint, payload);
+            var response = CallApiPost(endpoint, payload);
             return response;
         }
 
-        public T Error<T>(string access_token, string payload)
+        public T Error<T>(string payload)
         {
             var endpoint = $"/apimate/Error/";
-            var response = CallApiPost(access_token, endpoint, payload);
+            var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<T>(response);
         }
 
-        public AnymateResponse Error(string access_token, string payload)
+        public AnymateResponse Error(string payload)
         {
-            return Error<AnymateResponse>(access_token, payload);
+            return Error<AnymateResponse>(payload);
         }
 
-        public AnymateResponse Error(string access_token, AnymateTaskAction action)
+        public AnymateResponse Error(AnymateTaskAction action)
         {
-            return Error<AnymateTaskAction>(access_token, action);
+            return Error<AnymateTaskAction>(action);
         }
 
-        public AnymateResponse Error<T>(string access_token, T action)
+        public AnymateResponse Error<T>(T action)
         {
-            return Error<AnymateResponse, T>(access_token, action);
+            return Error<AnymateResponse, T>(action);
         }
 
-        public TResponse Error<TResponse, TAction>(string access_token, TAction action)
+        public TResponse Error<TResponse, TAction>(TAction action)
         {
             var payload = JsonConvert.SerializeObject(action);
-            return Error<TResponse>(access_token, payload);
+            return Error<TResponse>(payload);
         }
 
 
-        public AnymateResponse Retry(string access_token, AnymateTaskAction action)
+        public AnymateResponse Retry(AnymateTaskAction action)
         {
-            return Retry<AnymateTaskAction>(access_token, action);
+            return Retry<AnymateTaskAction>(action);
         }
 
-        public AnymateResponse Retry(string access_token, string payload)
+        public AnymateResponse Retry(string payload)
         {
-            return Retry<AnymateResponse>(access_token, payload);
+            return Retry<AnymateResponse>(payload);
         }
 
-        public TResponse Retry<TResponse>(string access_token, string payload)
+        public TResponse Retry<TResponse>(string payload)
         {
             var endpoint = $"/apimate/Retry/";
-            var response = CallApiPost(access_token, endpoint, payload);
+            var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
-        public TResponse Retry<TResponse, TAction>(string access_token, TAction action)
+        public TResponse Retry<TResponse, TAction>(TAction action)
         {
             var payload = JsonConvert.SerializeObject(action);
-            return Retry<TResponse>(access_token, payload);
+            return Retry<TResponse>(payload);
         }
 
-        public AnymateResponse Retry<T>(string access_token, T action)
+        public AnymateResponse Retry<T>(T action)
         {
-            return Retry<AnymateResponse, T>(access_token, action);
+            return Retry<AnymateResponse, T>(action);
         }
 
-        public AnymateResponse Manual(string access_token, string payload)
+        public AnymateResponse Manual(string payload)
         {
-            return Manual<AnymateResponse>(access_token, payload);
+            return Manual<AnymateResponse>(payload);
         }
 
-        public TResponse Manual<TResponse>(string access_token, string payload)
+        public TResponse Manual<TResponse>(string payload)
         {
             var endpoint = $"/apimate/Manual/";
-            var response = CallApiPost(access_token, endpoint, payload);
+            var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
-        public AnymateResponse Manual(string access_token, AnymateTaskAction action)
+        public AnymateResponse Manual(AnymateTaskAction action)
         {
-            return Manual<AnymateTaskAction>(access_token, action);
-        }
-        public AnymateResponse Manual<T>(string access_token, T action)
-        {
-            return Manual<AnymateResponse, T>(access_token, action);
+            return Manual<AnymateTaskAction>(action);
         }
 
-        public TResponse Manual<TResponse, TAction>(string access_token, TAction action)
+        public AnymateResponse Manual<T>(T action)
+        {
+            return Manual<AnymateResponse, T>(action);
+        }
+
+        public TResponse Manual<TResponse, TAction>(TAction action)
         {
             var payload = JsonConvert.SerializeObject(action);
-            return Manual<TResponse>(access_token, payload);
+            return Manual<TResponse>(payload);
         }
 
-        public AnymateResponse Solved(string access_token, string payload)
+        public AnymateResponse Solved(string payload)
         {
-            return Solved<AnymateResponse>(access_token, payload);
+            return Solved<AnymateResponse>(payload);
         }
 
-        public TResponse Solved<TResponse>(string access_token, string payload)
+        public TResponse Solved<TResponse>(string payload)
         {
             var endpoint = $"/apimate/Solved/";
-            var response = CallApiPost(access_token, endpoint, payload);
+            var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
-        public AnymateResponse Solved(string access_token, AnymateTaskAction action)
+        public AnymateResponse Solved(AnymateTaskAction action)
         {
-            return Solved<AnymateTaskAction>(access_token, action);
+            return Solved<AnymateTaskAction>(action);
         }
 
-        public AnymateResponse Solved<T>(string access_token, T action)
+        public AnymateResponse Solved<T>(T action)
         {
-            return Solved<AnymateResponse, T>(access_token, action);
+            return Solved<AnymateResponse, T>(action);
         }
 
-        public TResponse Solved<TResponse, TAction>(string access_token, TAction action)
+        public TResponse Solved<TResponse, TAction>(TAction action)
         {
             var payload = JsonConvert.SerializeObject(action);
-            return Solved<TResponse>(access_token, payload);
+            return Solved<TResponse>(payload);
         }
-
     }
 }
