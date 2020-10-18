@@ -26,7 +26,11 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/*.csproj'
-    versioningScheme: 'off'
+    versioningScheme: byBuildNumber
+    packTimezone: 'utc'
+    majorVersion: '$(Major)'
+    minorVersion: '$(Minor)'
+    patchVersion: '$(Patch)'
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: dotnet_lib_drop'
   inputs:
