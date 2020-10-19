@@ -15,8 +15,6 @@ namespace Anymate
         T StartOrGetRun<T>(string processKey);
         T OkToRun<T>(string processKey);
         AnymateOkToRun OkToRun(string processKey);
-        T GetVariables<T>(string processKey);
-        string GetVariables(string processKey);
         string TakeNext(string processKey);
         T TakeNext<T>(string processKey);
         AnymateResponse CreateTask<T>(T newTask, string processKey);

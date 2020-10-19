@@ -361,23 +361,10 @@ namespace Anymate
             return OkToRun<AnymateOkToRun>(processKey);
         }
 
-        public T GetVariables<T>(string processKey)
-        {
-            var jsonResult = GetVariables(processKey);
-            var result = JsonConvert.DeserializeObject<T>(jsonResult);
-            return result;
-        }
-
-        public string GetVariables(string processKey)
-        {
-            var endpoint = $"/apimate/GetRules/{processKey}";
-            return CallApiGet(endpoint);
-        }
-
 
         public T GetRules<T>(string processKey)
         {
-            var jsonResult = GetVariables(processKey);
+            var jsonResult = GetRules(processKey);
             var result = JsonConvert.DeserializeObject<T>(jsonResult);
             return result;
         }
