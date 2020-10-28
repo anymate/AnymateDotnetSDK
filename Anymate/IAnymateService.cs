@@ -1,4 +1,5 @@
 ﻿using Anymate.Models;
+using System.Threading.Tasks;
 
 namespace Anymate
 {
@@ -6,51 +7,51 @@ namespace Anymate
     {
         string AccessToken { get; set; }
         bool HasAuthCredentials { get; }
-        AnymateResponse FinishRun(string payload);
-        TResponse FinishRun<TResponse>(string payload);
-        AnymateResponse FinishRun(AnymateFinishRun action);
-        AnymateResponse FinishRun<T>(T action);
-        TResponse FinishRun<TResponse, TAction>(TAction action);
-        AnymateRunResponse StartOrGetRun(string processKey);
-        T StartOrGetRun<T>(string processKey);
-        T OkToRun<T>(string processKey);
-        AnymateOkToRun OkToRun(string processKey);
-        string TakeNext(string processKey);
-        T TakeNext<T>(string processKey);
-        AnymateResponse CreateTask<T>(T newTask, string processKey);
-        TResponse CreateTask<TResponse, TModel>(TModel newTask, string processKey);
-        TResponse CreateTask<TResponse>(string payload, string processKey);
-        AnymateResponse UpdateTask<T>(T updateTask);
-        TResponse UpdateTask<TResponse, TUpdate>(TUpdate updateTask);
-        TResponse UpdateTask<TResponse>(string payload);
-        string CreateAndTakeTask<T>(T newTask, string processKey);
-        string CreateAndTakeTask(string payload, string processKey);
-        T Error<T>(string payload);
-        AnymateResponse Error(string payload);
-        AnymateResponse Error(AnymateTaskAction action);
-        AnymateResponse Error<T>(T action);
-        TResponse Error<TResponse, TAction>(TAction action);
-        AnymateResponse Retry(AnymateTaskAction action);
-        AnymateResponse Retry(string payload);
-        TResponse Retry<TResponse>(string payload);
-        TResponse Retry<TResponse, TAction>(TAction action);
-        AnymateResponse Retry<T>(T action);
-        AnymateResponse Manual(string payload);
-        TResponse Manual<TResponse>(string payload);
-        AnymateResponse Manual(AnymateTaskAction action);
-        AnymateResponse Manual<T>(T action);
-        TResponse Manual<TResponse, TAction>(TAction action);
-        AnymateResponse Solved(string payload);
-        TResponse Solved<TResponse>(string payload);
-        AnymateResponse Solved(AnymateTaskAction action);
-        AnymateResponse Solved<T>(T action);
-        TResponse Solved<TResponse, TAction>(TAction action);
-        AnymateResponse Failure(string payload);
-        TResponse Failure<TResponse>(string payload);
-        AnymateResponse Failure(AnymateProcessFailure action);
-        AnymateResponse Failure<T>(T action);
-        TResponse Failure<TResponse, TAction>(TAction action);
-        T GetRules<T>(string processKey);
-        string GetRules(string processKey);
+        Task<string> CreateAndTakeTaskAsync(string payload, string processKey);
+        Task<string> CreateAndTakeTaskAsync<T>(T newTask, string processKey);
+        Task<AnymateResponse> CreateTaskAsync<T>(T newTask, string processKey);
+        Task<TResponse> CreateTaskAsync<TResponse, TModel>(TModel newTask, string processKey);
+        Task<TResponse> CreateTaskAsync<TResponse>(string payload, string processKey);
+        Task<AnymateResponse> ErrorAsync(AnymateTaskAction action);
+        Task<AnymateResponse> ErrorAsync(string payload);
+        Task<T> ErrorAsync<T>(string payload);
+        Task<AnymateResponse> ErrorAsync<T>(T action);
+        Task<TResponse> ErrorAsync<TResponse, TAction>(TAction action);
+        Task<AnymateResponse> FailureAsync(AnymateProcessFailure action);
+        Task<AnymateResponse> FailureAsync(string payload);
+        Task<AnymateResponse> FailureAsync<T>(T action);
+        Task<TResponse> FailureAsync<TResponse, TAction>(TAction action);
+        Task<TResponse> FailureAsync<TResponse>(string payload);
+        Task<AnymateResponse> FinishRunAsync(AnymateFinishRun action);
+        Task<AnymateResponse> FinishRunAsync(string payload);
+        Task<AnymateResponse> FinishRunAsync<T>(T action);
+        Task<TResponse> FinishRunAsync<TResponse, TAction>(TAction action);
+        Task<TResponse> FinishRunAsync<TResponse>(string payload);
+        Task<string> GetRulesAsync(string processKey);
+        Task<T> GetRulesAsync<T>(string processKey);
+        Task<AnymateResponse> ManualAsync(AnymateTaskAction action);
+        Task<AnymateResponse> ManualAsync(string payload);
+        Task<AnymateResponse> ManualAsync<T>(T action);
+        Task<TResponse> ManualAsync<TResponse, TAction>(TAction action);
+        Task<TResponse> ManualAsync<TResponse>(string payload);
+        Task<AnymateOkToRun> OkToRunAsync(string processKey);
+        Task<T> OkToRunAsync<T>(string processKey);
+        Task<AnymateResponse> RetryAsync(AnymateTaskAction action);
+        Task<AnymateResponse> RetryAsync(string payload);
+        Task<AnymateResponse> RetryAsync<T>(T action);
+        Task<TResponse> RetryAsync<TResponse, TAction>(TAction action);
+        Task<TResponse> RetryAsync<TResponse>(string payload);
+        Task<AnymateResponse> SolvedAsync(AnymateTaskAction action);
+        Task<AnymateResponse> SolvedAsync(string payload);
+        Task<AnymateResponse> SolvedAsync<T>(T action);
+        Task<TResponse> SolvedAsync<TResponse, TAction>(TAction action);
+        Task<TResponse> SolvedAsync<TResponse>(string payload);
+        Task<AnymateRunResponse> StartOrGetRunAsync(string processKey);
+        Task<T> StartOrGetRunAsync<T>(string processKey);
+        Task<string> TakeNextAsync(string processKey);
+        Task<T> TakeNextAsync<T>(string processKey);
+        Task<AnymateResponse> UpdateTaskAsync<T>(T updateTask);
+        Task<TResponse> UpdateTaskAsync<TResponse, TUpdate>(TUpdate updateTask);
+        Task<TResponse> UpdateTaskAsync<TResponse>(string payload);
     }
 }
