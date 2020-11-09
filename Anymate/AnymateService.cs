@@ -19,7 +19,7 @@ namespace Anymate
         private static string OnPremisesApiUrl { get; set; }
         private static string OnPremisesAuthUrl { get; set; }
         private bool OnPremisesMode { get; set; } = false;
-        private AuthTokenRequest _request { get; set; } = new AuthTokenRequest();
+        private AuthTokenRequest _request { get; set; }
 
         public string AccessToken
         {
@@ -254,7 +254,10 @@ namespace Anymate
                 }
             }
         }
-
+        private string CallApiPost(string endpoint, string jsonPayload)
+        {
+            return AsyncUtil.RunSync(() => CallApiPostAsync(endpoint, jsonPayload));
+        }
 
         private async Task<string> CallApiGetAsync(string endpoint)
         {
@@ -275,7 +278,14 @@ namespace Anymate
             }
         }
 
+        private string CallApiGet(string endpoint)
+        {
+            return AsyncUtil.RunSync(() => CallApiGetAsync(endpoint));
+        }
+        
+        
 
+        #region Async Methods
         public async Task<AnymateResponse> FailureAsync(string payload)
         {
             return await FailureAsync<AnymateResponse>(payload);
@@ -546,5 +556,280 @@ namespace Anymate
             var payload = JsonConvert.SerializeObject(action);
             return await SolvedAsync<TResponse>(payload);
         }
+        
+        #endregion
+        #region Sync Methods
+                public AnymateResponse Failure(string payload)
+        {
+            return Failure<AnymateResponse>(payload);
+        }
+
+        public TResponse Failure<TResponse>(string payload)
+        {
+            var endpoint = $"/apimate/Failure/";
+            var response = CallApiPost(endpoint, payload);
+            return JsonConvert.DeserializeObject<TResponse>(response);
+        }
+
+        public AnymateResponse Failure(AnymateProcessFailure action)
+        {
+            return Failure<AnymateProcessFailure>(action);
+        }
+
+        public AnymateResponse Failure<T>(T action)
+        {
+            return Failure<AnymateResponse, T>(action);
+        }
+
+        public TResponse Failure<TResponse, TAction>(TAction action)
+        {
+            var payload = JsonConvert.SerializeObject(action);
+            return Failure<TResponse>(payload);
+        }
+
+
+        public AnymateResponse FinishRun(string payload)
+        {
+            return FinishRun<AnymateResponse>(payload);
+        }
+
+        public TResponse FinishRun<TResponse>(string payload)
+        {
+            var endpoint = $"/apimate/FinishRun/";
+            var response = CallApiPost(endpoint, payload);
+            return JsonConvert.DeserializeObject<TResponse>(response);
+        }
+
+        public AnymateResponse FinishRun(AnymateFinishRun action)
+        {
+            return FinishRun<AnymateFinishRun>(action);
+        }
+
+        public AnymateResponse FinishRun<T>(T action)
+        {
+            return FinishRun<AnymateResponse, T>(action);
+        }
+
+        public TResponse FinishRun<TResponse, TAction>(TAction action)
+        {
+            var payload = JsonConvert.SerializeObject(action);
+            return FinishRun<TResponse>(payload);
+        }
+
+        public AnymateRunResponse StartOrGetRun(string processKey)
+        {
+            return StartOrGetRun<AnymateRunResponse>(processKey);
+        }
+
+        public T StartOrGetRun<T>(string processKey)
+        {
+            var endpoint = $"/apimate/StartOrGetRun/{processKey}";
+            var response = CallApiGet(endpoint);
+            return JsonConvert.DeserializeObject<T>(response);
+        }
+
+        public T OkToRun<T>(string processKey)
+        {
+            var endpoint = $"/apimate/OkToRun/{processKey}";
+            var response = CallApiGet(endpoint);
+            return JsonConvert.DeserializeObject<T>(response);
+        }
+
+        public AnymateOkToRun OkToRun(string processKey)
+        {
+            return OkToRun<AnymateOkToRun>(processKey);
+        }
+
+
+        public T GetRules<T>(string processKey)
+        {
+            var jsonResult = GetRules(processKey);
+            var result = JsonConvert.DeserializeObject<T>(jsonResult);
+            return result;
+        }
+
+        public string GetRules(string processKey)
+        {
+            var endpoint = $"/apimate/GetRules/{processKey}";
+            return CallApiGet(endpoint);
+        }
+
+        public string TakeNext(string processKey)
+        {
+            var endpoint = $"/apimate/TakeNext/{processKey}";
+            return CallApiGet(endpoint);
+        }
+
+        public T TakeNext<T>(string processKey)
+        {
+            var jsonResult = TakeNext(processKey);
+            var result = JsonConvert.DeserializeObject<T>(jsonResult);
+            return result;
+        }
+
+        public AnymateResponse CreateTask<T>(T newTask, string processKey)
+        {
+            return CreateTask<AnymateResponse, T>(newTask, processKey);
+        }
+
+        public TResponse CreateTask<TResponse, TModel>(TModel newTask, string processKey)
+        {
+            var payload = JsonConvert.SerializeObject(newTask);
+            return CreateTask<TResponse>(payload, processKey);
+        }
+
+        public TResponse CreateTask<TResponse>(string payload, string processKey)
+        {
+            var endpoint = $"/apimate/CreateTask/{processKey}";
+            var response = CallApiPost(endpoint, payload);
+            return JsonConvert.DeserializeObject<TResponse>(response);
+        }
+
+        public AnymateResponse UpdateTask<T>(T updateTask)
+        {
+            return UpdateTask<AnymateResponse, T>(updateTask);
+        }
+
+        public TResponse UpdateTask<TResponse>(string payload)
+        {
+            var endpoint = $"/apimate/UpdateTask/";
+
+            var response = CallApiPost(endpoint, payload);
+            return JsonConvert.DeserializeObject<TResponse>(response);
+        }
+
+        public TResponse UpdateTask<TResponse, TUpdate>(TUpdate updateTask)
+        {
+            var payload = JsonConvert.SerializeObject(updateTask);
+            return UpdateTask<TResponse>(payload);
+        }
+
+        public string CreateAndTakeTask<T>(T newTask, string processKey)
+        {
+            var payload = JsonConvert.SerializeObject(newTask);
+            return CreateAndTakeTask(payload, processKey);
+        }
+
+        public string CreateAndTakeTask(string payload, string processKey)
+        {
+            var endpoint = $"/apimate/CreateAndTakeTask/{processKey}";
+            var response = CallApiPost(endpoint, payload);
+            return response;
+        }
+
+        public T Error<T>(string payload)
+        {
+            var endpoint = $"/apimate/Error/";
+            var response = CallApiPost(endpoint, payload);
+            return JsonConvert.DeserializeObject<T>(response);
+        }
+
+        public AnymateResponse Error(string payload)
+        {
+            return Error<AnymateResponse>(payload);
+        }
+
+        public AnymateResponse Error(AnymateTaskAction action)
+        {
+            return Error<AnymateTaskAction>(action);
+        }
+
+        public AnymateResponse Error<T>(T action)
+        {
+            return Error<AnymateResponse, T>(action);
+        }
+
+        public TResponse Error<TResponse, TAction>(TAction action)
+        {
+            var payload = JsonConvert.SerializeObject(action);
+            return Error<TResponse>(payload);
+        }
+
+
+        public AnymateResponse Retry(AnymateTaskAction action)
+        {
+            return Retry<AnymateTaskAction>(action);
+        }
+
+        public AnymateResponse Retry(string payload)
+        {
+            return Retry<AnymateResponse>(payload);
+        }
+
+        public TResponse Retry<TResponse>(string payload)
+        {
+            var endpoint = $"/apimate/Retry/";
+            var response = CallApiPost(endpoint, payload);
+            return JsonConvert.DeserializeObject<TResponse>(response);
+        }
+
+        public TResponse Retry<TResponse, TAction>(TAction action)
+        {
+            var payload = JsonConvert.SerializeObject(action);
+            return Retry<TResponse>(payload);
+        }
+
+        public AnymateResponse Retry<T>(T action)
+        {
+            return Retry<AnymateResponse, T>(action);
+        }
+
+        public AnymateResponse Manual(string payload)
+        {
+            return Manual<AnymateResponse>(payload);
+        }
+
+        public TResponse Manual<TResponse>(string payload)
+        {
+            var endpoint = $"/apimate/Manual/";
+            var response = CallApiPost(endpoint, payload);
+            return JsonConvert.DeserializeObject<TResponse>(response);
+        }
+
+        public AnymateResponse Manual(AnymateTaskAction action)
+        {
+            return Manual<AnymateTaskAction>(action);
+        }
+
+        public AnymateResponse Manual<T>(T action)
+        {
+            return Manual<AnymateResponse, T>(action);
+        }
+
+        public TResponse Manual<TResponse, TAction>(TAction action)
+        {
+            var payload = JsonConvert.SerializeObject(action);
+            return Manual<TResponse>(payload);
+        }
+
+        public AnymateResponse Solved(string payload)
+        {
+            return Solved<AnymateResponse>(payload);
+        }
+
+        public TResponse Solved<TResponse>(string payload)
+        {
+            var endpoint = $"/apimate/Solved/";
+            var response = CallApiPost(endpoint, payload);
+            return JsonConvert.DeserializeObject<TResponse>(response);
+        }
+
+        public AnymateResponse Solved(AnymateTaskAction action)
+        {
+            return Solved<AnymateTaskAction>(action);
+        }
+
+        public AnymateResponse Solved<T>(T action)
+        {
+            return Solved<AnymateResponse, T>(action);
+        }
+
+        public TResponse Solved<TResponse, TAction>(TAction action)
+        {
+            var payload = JsonConvert.SerializeObject(action);
+            return Solved<TResponse>(payload);
+        }
+        #endregion
+        
     }
 }
