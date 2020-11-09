@@ -1,4 +1,4 @@
-﻿namespace Anymate.Models
+﻿namespace Anymate
 {
     public class AnymateRunResponse
     {

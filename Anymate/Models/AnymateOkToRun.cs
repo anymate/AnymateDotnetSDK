@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Anymate.Models
+namespace Anymate
 {
     public class AnymateOkToRun
     {

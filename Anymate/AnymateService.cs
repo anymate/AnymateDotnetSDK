@@ -6,8 +6,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using Anymate.Helpers;
-using Anymate.Models;
 using Newtonsoft.Json;
 
 namespace Anymate

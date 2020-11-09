@@ -2,7 +2,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-namespace Anymate.Helpers
+namespace Anymate
 {
     /// <summary>
     /// Helper class to run async methods within a sync process.
