@@ -291,7 +291,7 @@ namespace Anymate
 
         public async Task<TResponse> FailureAsync<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/Failure/";
+            var endpoint = $"/api/Failure/";
             var response = await CallApiPostAsync(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -320,7 +320,7 @@ namespace Anymate
 
         public async Task<TResponse> FinishRunAsync<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/FinishRun/";
+            var endpoint = $"/api/FinishRun/";
             var response = await CallApiPostAsync(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -348,14 +348,14 @@ namespace Anymate
 
         public async Task<T> StartOrGetRunAsync<T>(string processKey)
         {
-            var endpoint = $"/apimate/StartOrGetRun/{processKey}";
+            var endpoint = $"/api/StartOrGetRun/{processKey}";
             var response = await CallApiGetAsync(endpoint);
             return JsonConvert.DeserializeObject<T>(response);
         }
 
         public async Task<T> OkToRunAsync<T>(string processKey)
         {
-            var endpoint = $"/apimate/OkToRun/{processKey}";
+            var endpoint = $"/api/OkToRun/{processKey}";
             var response = await CallApiGetAsync(endpoint);
             return JsonConvert.DeserializeObject<T>(response);
         }
@@ -375,13 +375,13 @@ namespace Anymate
 
         public async Task<string> GetRulesAsync(string processKey)
         {
-            var endpoint = $"/apimate/GetRules/{processKey}";
+            var endpoint = $"/api/GetRules/{processKey}";
             return await CallApiGetAsync(endpoint);
         }
 
         public async Task<string> TakeNextAsync(string processKey)
         {
-            var endpoint = $"/apimate/TakeNext/{processKey}";
+            var endpoint = $"/api/TakeNext/{processKey}";
             return await CallApiGetAsync(endpoint);
         }
 
@@ -405,7 +405,7 @@ namespace Anymate
 
         public async Task<TResponse> CreateTaskAsync<TResponse>(string payload, string processKey)
         {
-            var endpoint = $"/apimate/CreateTask/{processKey}";
+            var endpoint = $"/api/CreateTask/{processKey}";
             var response = await CallApiPostAsync(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -417,7 +417,7 @@ namespace Anymate
 
         public async Task<TResponse> UpdateTaskAsync<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/UpdateTask/";
+            var endpoint = $"/api/UpdateTask/";
 
             var response = await CallApiPostAsync(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
@@ -437,14 +437,14 @@ namespace Anymate
 
         public async Task<string> CreateAndTakeTaskAsync(string payload, string processKey)
         {
-            var endpoint = $"/apimate/CreateAndTakeTask/{processKey}";
+            var endpoint = $"/api/CreateAndTakeTask/{processKey}";
             var response = await CallApiPostAsync(endpoint, payload);
             return response;
         }
 
         public async Task<T> ErrorAsync<T>(string payload)
         {
-            var endpoint = $"/apimate/Error/";
+            var endpoint = $"/api/Error/";
             var response = await CallApiPostAsync(endpoint, payload);
             return JsonConvert.DeserializeObject<T>(response);
         }
@@ -483,7 +483,7 @@ namespace Anymate
 
         public async Task<TResponse> RetryAsync<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/Retry/";
+            var endpoint = $"/api/Retry/";
             var response = await CallApiPostAsync(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -506,7 +506,7 @@ namespace Anymate
 
         public async Task<TResponse> ManualAsync<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/Manual/";
+            var endpoint = $"/api/Manual/";
             var response = await CallApiPostAsync(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -534,7 +534,7 @@ namespace Anymate
 
         public async Task<TResponse> SolvedAsync<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/Solved/";
+            var endpoint = $"/api/Solved/";
             var response = await CallApiPostAsync(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -564,7 +564,7 @@ namespace Anymate
 
         public TResponse Failure<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/Failure/";
+            var endpoint = $"/api/Failure/";
             var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -593,7 +593,7 @@ namespace Anymate
 
         public TResponse FinishRun<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/FinishRun/";
+            var endpoint = $"/api/FinishRun/";
             var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -621,14 +621,14 @@ namespace Anymate
 
         public T StartOrGetRun<T>(string processKey)
         {
-            var endpoint = $"/apimate/StartOrGetRun/{processKey}";
+            var endpoint = $"/api/StartOrGetRun/{processKey}";
             var response = CallApiGet(endpoint);
             return JsonConvert.DeserializeObject<T>(response);
         }
 
         public T OkToRun<T>(string processKey)
         {
-            var endpoint = $"/apimate/OkToRun/{processKey}";
+            var endpoint = $"/api/OkToRun/{processKey}";
             var response = CallApiGet(endpoint);
             return JsonConvert.DeserializeObject<T>(response);
         }
@@ -648,13 +648,13 @@ namespace Anymate
 
         public string GetRules(string processKey)
         {
-            var endpoint = $"/apimate/GetRules/{processKey}";
+            var endpoint = $"/api/GetRules/{processKey}";
             return CallApiGet(endpoint);
         }
 
         public string TakeNext(string processKey)
         {
-            var endpoint = $"/apimate/TakeNext/{processKey}";
+            var endpoint = $"/api/TakeNext/{processKey}";
             return CallApiGet(endpoint);
         }
 
@@ -678,7 +678,7 @@ namespace Anymate
 
         public TResponse CreateTask<TResponse>(string payload, string processKey)
         {
-            var endpoint = $"/apimate/CreateTask/{processKey}";
+            var endpoint = $"/api/CreateTask/{processKey}";
             var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -690,7 +690,7 @@ namespace Anymate
 
         public TResponse UpdateTask<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/UpdateTask/";
+            var endpoint = $"/api/UpdateTask/";
 
             var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
@@ -710,14 +710,14 @@ namespace Anymate
 
         public string CreateAndTakeTask(string payload, string processKey)
         {
-            var endpoint = $"/apimate/CreateAndTakeTask/{processKey}";
+            var endpoint = $"/api/CreateAndTakeTask/{processKey}";
             var response = CallApiPost(endpoint, payload);
             return response;
         }
 
         public T Error<T>(string payload)
         {
-            var endpoint = $"/apimate/Error/";
+            var endpoint = $"/api/Error/";
             var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<T>(response);
         }
@@ -756,7 +756,7 @@ namespace Anymate
 
         public TResponse Retry<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/Retry/";
+            var endpoint = $"/api/Retry/";
             var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -779,7 +779,7 @@ namespace Anymate
 
         public TResponse Manual<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/Manual/";
+            var endpoint = $"/api/Manual/";
             var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -807,7 +807,7 @@ namespace Anymate
 
         public TResponse Solved<TResponse>(string payload)
         {
-            var endpoint = $"/apimate/Solved/";
+            var endpoint = $"/api/Solved/";
             var response = CallApiPost(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
