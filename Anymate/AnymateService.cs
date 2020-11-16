@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO.Pipes;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -420,6 +421,7 @@ namespace Anymate
             return await CreateTaskAsync<TResponse>(payload, processKey);
         }
 
+        
         public async Task<TResponse> CreateTaskAsync<TResponse>(string payload, string processKey)
         {
             var endpoint = $"/api/CreateTask/{processKey}";
@@ -446,6 +448,13 @@ namespace Anymate
             return await UpdateTaskAsync<TResponse>(payload);
         }
 
+        public async Task<TResponse> CreateAndTakeTaskAsync<TResponse, TCreate>(TCreate newTask, string processKey)
+        {
+            var jsonResult = await CreateAndTakeTaskAsync<TCreate>(newTask, processKey);
+            var response = JsonConvert.DeserializeObject<TResponse>(jsonResult);
+            return response;
+        }
+
         public async Task<string> CreateAndTakeTaskAsync<T>(T newTask, string processKey)
         {
             var payload = JsonConvert.SerializeObject(newTask);
@@ -459,6 +468,13 @@ namespace Anymate
             return response;
         }
 
+        public async Task<TResponse> CreateAndTakeTaskAsync<TResponse>(object newTask, string processKey)
+        {
+            var jsonResult = await CreateAndTakeTaskAsync(newTask, processKey);
+            var response = JsonConvert.DeserializeObject<TResponse>(jsonResult);
+            return response;
+        }
+        
         public async Task<T> ErrorAsync<T>(string payload)
         {
             var endpoint = $"/api/Error/";
@@ -802,6 +818,20 @@ namespace Anymate
             return response;
         }
 
+        public TResponse CreateAndTakeTask<TResponse, TCreate>(TCreate newTask, string processKey)
+        {
+            var jsonResult = CreateAndTakeTask(newTask, processKey);
+            var response = JsonConvert.DeserializeObject<TResponse>(jsonResult);
+            return response;
+        }
+
+        public TResponse CreateAndTakeTask<TResponse>(object newTask, string processKey)
+        {
+            var jsonResult = CreateAndTakeTask(newTask, processKey);
+            var response = JsonConvert.DeserializeObject<TResponse>(jsonResult);
+            return response;
+        }
+        
         public T Error<T>(string payload)
         {
             var endpoint = $"/api/Error/";

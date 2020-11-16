@@ -36,8 +36,10 @@ namespace Anymate
         Task<AnymateResponse> UpdateTaskAsync<T>(T updateTask);
         Task<TResponse> UpdateTaskAsync<TResponse>(string payload);
         Task<TResponse> UpdateTaskAsync<TResponse, TUpdate>(TUpdate updateTask);
+        Task<TResponse> CreateAndTakeTaskAsync<TResponse, TCreate>(TCreate newTask, string processKey);
         Task<string> CreateAndTakeTaskAsync<T>(T newTask, string processKey);
         Task<string> CreateAndTakeTaskAsync(string payload, string processKey);
+        Task<TResponse> CreateAndTakeTaskAsync<TResponse>(object newTask, string processKey);
         Task<T> ErrorAsync<T>(string payload);
         Task<AnymateResponse> ErrorAsync(string payload);
         Task<AnymateResponse> ErrorAsync(AnymateTaskAction action);
@@ -105,6 +107,8 @@ namespace Anymate
         TResponse UpdateTask<TResponse, TUpdate>(TUpdate updateTask);
         string CreateAndTakeTask<T>(T newTask, string processKey);
         string CreateAndTakeTask(string payload, string processKey);
+        TResponse CreateAndTakeTask<TResponse, TCreate>(TCreate newTask, string processKey);
+        TResponse CreateAndTakeTask<TResponse>(object newTask, string processKey);
         T Error<T>(string payload);
         AnymateResponse Error(string payload);
         AnymateResponse Error(AnymateTaskAction action);
