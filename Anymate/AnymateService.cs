@@ -150,8 +150,8 @@ namespace Anymate
 
         private async Task<AuthResponse> GetOrRefreshAccessTokenAsync(AuthTokenRequest request)
         {
-
-            if (string.IsNullOrWhiteSpace(request.access_token) || !TokenValidator.RefreshNotNeeded(request.access_token))
+            if (string.IsNullOrWhiteSpace(request.access_token) ||
+                !TokenValidator.RefreshNotNeeded(request.access_token))
             {
                 if (string.IsNullOrWhiteSpace(request.client_id))
                     throw new ArgumentNullException("client_id was null.");
@@ -195,7 +195,8 @@ namespace Anymate
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 client.Timeout = TimeSpan.FromMinutes(5);
-                using (HttpResponseMessage response = await client.PostAsync($"{GetAuthUrl(customerKey)}/connect/token", content))
+                using (HttpResponseMessage response =
+                    await client.PostAsync($"{GetAuthUrl(customerKey)}/connect/token", content))
                 {
                     using (HttpContent responseContent = response.Content)
                     {
@@ -240,11 +241,13 @@ namespace Anymate
             var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _request.access_token);
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", _request.access_token);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 client.Timeout = TimeSpan.FromMinutes(5);
-                using (HttpResponseMessage response = await client.PostAsync(GetAnymateUrl(customerKey) + endpoint, content))
+                using (HttpResponseMessage response =
+                    await client.PostAsync(GetAnymateUrl(customerKey) + endpoint, content))
                 using (HttpContent responseContent = response.Content)
                 {
                     string data = await responseContent.ReadAsStringAsync();
@@ -252,6 +255,7 @@ namespace Anymate
                 }
             }
         }
+
         private string CallApiPost(string endpoint, string jsonPayload)
         {
             return AsyncUtil.RunSync(() => CallApiPostAsync(endpoint, jsonPayload));
@@ -263,7 +267,8 @@ namespace Anymate
             var customerKey = GetCustomerKeyFromToken(_request.access_token);
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _request.access_token);
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", _request.access_token);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 client.Timeout = TimeSpan.FromMinutes(5);
@@ -280,10 +285,10 @@ namespace Anymate
         {
             return AsyncUtil.RunSync(() => CallApiGetAsync(endpoint));
         }
-        
-        
+
 
         #region Async Methods
+
         public async Task<AnymateResponse> FailureAsync(string payload)
         {
             return await FailureAsync<AnymateResponse>(payload);
@@ -312,6 +317,11 @@ namespace Anymate
             return await FailureAsync<TResponse>(payload);
         }
 
+        public async Task<AnymateResponse> FailureAsync(string processKey, string message)
+        {
+            return await FailureAsync(new AnymateProcessFailure()
+                {ProcessKey = processKey, Message = message});
+        }
 
         public async Task<AnymateResponse> FinishRunAsync(string payload)
         {
@@ -339,6 +349,13 @@ namespace Anymate
         {
             var payload = JsonConvert.SerializeObject(action);
             return await FinishRunAsync<TResponse>(payload);
+        }
+
+        public async Task<AnymateResponse> FinishRunAsync(long runId, int? overwriteSecondsSaved = null,
+            int? overwriteEntries = null)
+        {
+            return await FinishRunAsync(new AnymateFinishRun()
+                {RunId = runId, OverwriteEntries = overwriteEntries, OverwriteSecondsSaved = overwriteSecondsSaved});
         }
 
         public async Task<AnymateRunResponse> StartOrGetRunAsync(string processKey)
@@ -470,6 +487,19 @@ namespace Anymate
             return await ErrorAsync<TResponse>(payload);
         }
 
+        public async Task<AnymateResponse> ErrorAsync(long taskId, string reason = null, string comment = null,
+            int? overwriteSecondsSaved = null, int? overwriteEntries = null)
+        {
+            var action = new AnymateTaskAction()
+            {
+                TaskId = taskId,
+                Reason = reason,
+                Comment = comment,
+                OverwriteEntries = overwriteEntries,
+                OverwriteSecondsSaved = overwriteSecondsSaved
+            };
+            return await ErrorAsync(action);
+        }
 
         public async Task<AnymateResponse> RetryAsync(AnymateTaskAction action)
         {
@@ -497,6 +527,20 @@ namespace Anymate
         public async Task<AnymateResponse> RetryAsync<T>(T action)
         {
             return await RetryAsync<AnymateResponse, T>(action);
+        }
+
+        public async Task<AnymateResponse> RetryAsync(long taskId, string reason = null, string comment = null,
+            int? overwriteSecondsSaved = null, int? overwriteEntries = null)
+        {
+            var action = new AnymateTaskAction()
+            {
+                TaskId = taskId,
+                Reason = reason,
+                Comment = comment,
+                OverwriteEntries = overwriteEntries,
+                OverwriteSecondsSaved = overwriteSecondsSaved
+            };
+            return await RetryAsync(action);
         }
 
         public async Task<AnymateResponse> ManualAsync(string payload)
@@ -527,6 +571,20 @@ namespace Anymate
             return await ManualAsync<TResponse>(payload);
         }
 
+        public async Task<AnymateResponse> ManualAsync(long taskId, string reason = null, string comment = null,
+            int? overwriteSecondsSaved = null, int? overwriteEntries = null)
+        {
+            var action = new AnymateTaskAction()
+            {
+                TaskId = taskId,
+                Reason = reason,
+                Comment = comment,
+                OverwriteEntries = overwriteEntries,
+                OverwriteSecondsSaved = overwriteSecondsSaved
+            };
+            return await ManualAsync(action);
+        }
+
         public async Task<AnymateResponse> SolvedAsync(string payload)
         {
             return await SolvedAsync<AnymateResponse>(payload);
@@ -554,10 +612,26 @@ namespace Anymate
             var payload = JsonConvert.SerializeObject(action);
             return await SolvedAsync<TResponse>(payload);
         }
-        
+
+        public async Task<AnymateResponse> SolvedAsync(long taskId, string reason = null, string comment = null,
+            int? overwriteSecondsSaved = null, int? overwriteEntries = null)
+        {
+            var action = new AnymateTaskAction()
+            {
+                TaskId = taskId,
+                Reason = reason,
+                Comment = comment,
+                OverwriteEntries = overwriteEntries,
+                OverwriteSecondsSaved = overwriteSecondsSaved
+            };
+            return await SolvedAsync(action);
+        }
+
         #endregion
+
         #region Sync Methods
-                public AnymateResponse Failure(string payload)
+
+        public AnymateResponse Failure(string payload)
         {
             return Failure<AnymateResponse>(payload);
         }
@@ -583,6 +657,12 @@ namespace Anymate
         {
             var payload = JsonConvert.SerializeObject(action);
             return Failure<TResponse>(payload);
+        }
+
+        public AnymateResponse Failure(string processKey, string message)
+        {
+            return Failure(new AnymateProcessFailure()
+                {ProcessKey = processKey, Message = message});
         }
 
 
@@ -612,6 +692,13 @@ namespace Anymate
         {
             var payload = JsonConvert.SerializeObject(action);
             return FinishRun<TResponse>(payload);
+        }
+
+        public AnymateResponse FinishRun(long runId, int? overwriteSecondsSaved = null,
+            int? overwriteEntries = null)
+        {
+            return FinishRun(new AnymateFinishRun()
+                {RunId = runId, OverwriteEntries = overwriteEntries, OverwriteSecondsSaved = overwriteSecondsSaved});
         }
 
         public AnymateRunResponse StartOrGetRun(string processKey)
@@ -743,6 +830,19 @@ namespace Anymate
             return Error<TResponse>(payload);
         }
 
+        public AnymateResponse Error(long taskId, string reason = null, string comment = null,
+            int? overwriteSecondsSaved = null, int? overwriteEntries = null)
+        {
+            var action = new AnymateTaskAction()
+            {
+                TaskId = taskId,
+                Reason = reason,
+                Comment = comment,
+                OverwriteEntries = overwriteEntries,
+                OverwriteSecondsSaved = overwriteSecondsSaved
+            };
+            return Error(action);
+        }
 
         public AnymateResponse Retry(AnymateTaskAction action)
         {
@@ -770,6 +870,20 @@ namespace Anymate
         public AnymateResponse Retry<T>(T action)
         {
             return Retry<AnymateResponse, T>(action);
+        }
+
+        public AnymateResponse Retry(long taskId, string reason = null, string comment = null,
+            int? overwriteSecondsSaved = null, int? overwriteEntries = null)
+        {
+            var action = new AnymateTaskAction()
+            {
+                TaskId = taskId,
+                Reason = reason,
+                Comment = comment,
+                OverwriteEntries = overwriteEntries,
+                OverwriteSecondsSaved = overwriteSecondsSaved
+            };
+            return Retry(action);
         }
 
         public AnymateResponse Manual(string payload)
@@ -800,6 +914,20 @@ namespace Anymate
             return Manual<TResponse>(payload);
         }
 
+        public AnymateResponse Manual(long taskId, string reason = null, string comment = null,
+            int? overwriteSecondsSaved = null, int? overwriteEntries = null)
+        {
+            var action = new AnymateTaskAction()
+            {
+                TaskId = taskId,
+                Reason = reason,
+                Comment = comment,
+                OverwriteEntries = overwriteEntries,
+                OverwriteSecondsSaved = overwriteSecondsSaved
+            };
+            return Manual(action);
+        }
+
         public AnymateResponse Solved(string payload)
         {
             return Solved<AnymateResponse>(payload);
@@ -827,7 +955,21 @@ namespace Anymate
             var payload = JsonConvert.SerializeObject(action);
             return Solved<TResponse>(payload);
         }
+
+        public AnymateResponse Solved(long taskId, string reason = null, string comment = null,
+            int? overwriteSecondsSaved = null, int? overwriteEntries = null)
+        {
+            var action = new AnymateTaskAction()
+            {
+                TaskId = taskId,
+                Reason = reason,
+                Comment = comment,
+                OverwriteEntries = overwriteEntries,
+                OverwriteSecondsSaved = overwriteSecondsSaved
+            };
+            return Solved(action);
+        }
+
         #endregion
-        
     }
 }
