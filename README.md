@@ -1,7 +1,7 @@
 
 ---
 
-** In order to use this library, you need to have an Anymate account. Please visit [anymate.io](https://www.anymate.io) for more information. **
+**In order to use this library, you need to have an Anymate account. Please visit [anymate.io](https://www.anymate.io) for more information.**
 
 ---
 
