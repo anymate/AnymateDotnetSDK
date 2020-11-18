@@ -100,7 +100,7 @@ You can see an example of a simple automation based on the Allocator Pattern bel
 ```
 
 !!! tip "Use the IAnymateService interface"
-    AnymateService implements the IAnymateService, making it easy to mock Anymate when writing unit tests.
+     AnymateService implements the IAnymateService, making it easy to mock Anymate when writing unit tests.
 
 
 
