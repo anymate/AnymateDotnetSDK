@@ -39,9 +39,9 @@ We have built the SDK to give you as much flexibility as possible. It is possibl
 Likewise, all functions are available in async and normal versions.
 
 **Create Task models for each Process**
-```
-    We recommend making models that mirror the Tasks for each Process. The functions exposed in AnymateService are flexible and have overloads which take [generic type parameters][c#generics]. 
-```
+
+    We recommend making models that mirror the Tasks for each Process. The functions exposed in AnymateService are flexible and have overloads which take [generic type parameters][csharpgenerics]. 
+
 
 The SDK is built to automatically take care of authentication with Anymate as well as refreshing access_tokens as needed. Once the AnymateService is initialized, you don't have to worry about it.
 You can see an example of a simple automation based on the Allocator Pattern below, where the automation script is working in one process and creating new tasks in another.
@@ -196,4 +196,4 @@ In order to let anymate know you are running on a on-premises license, simply in
 [anymatedocs]: http://docs.anymate.io/developer/SDK/dotnet/
 [githublink]: https://github.com/anymate/AnymateDotnetSDK/
 [nugetlink]: https://www.nuget.org/packages/Anymate/
-[c#generics]: https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/generics/generic-type-parameters
+[csharpgenerics]: https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/generics/generic-type-parameters
