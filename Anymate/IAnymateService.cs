@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Threading.Tasks;
 
 namespace Anymate
@@ -30,7 +31,7 @@ namespace Anymate
         Task<string> GetRulesAsync(string processKey);
         Task<string> TakeNextAsync(string processKey);
         Task<T> TakeNextAsync<T>(string processKey);
-        Task<AnymateResponse> CreateTaskAsync<T>(T newTask, string processKey);
+        Task<AnymateCreateTaskResponse> CreateTaskAsync<T>(T newTask, string processKey);
         Task<TResponse> CreateTaskAsync<TResponse, TModel>(TModel newTask, string processKey);
         Task<TResponse> CreateTaskAsync<TResponse>(string payload, string processKey);
         Task<AnymateResponse> UpdateTaskAsync<T>(T updateTask);
@@ -49,14 +50,13 @@ namespace Anymate
         Task<AnymateResponse> ErrorAsync(long taskId, string reason = null, string comment = null,
             int? overwriteSecondsSaved = null, int? overwriteEntries = null);
 
-        Task<AnymateResponse> RetryAsync(AnymateTaskAction action);
+        Task<AnymateResponse> RetryAsync(AnymateRetryTaskAction action);
         Task<AnymateResponse> RetryAsync(string payload);
         Task<TResponse> RetryAsync<TResponse>(string payload);
         Task<TResponse> RetryAsync<TResponse, TAction>(TAction action);
         Task<AnymateResponse> RetryAsync<T>(T action);
 
-        Task<AnymateResponse> RetryAsync(long taskId, string reason = null, string comment = null,
-            int? overwriteSecondsSaved = null, int? overwriteEntries = null);
+        Task<AnymateResponse> RetryAsync(long taskId, string reason = null, string comment = null, DateTimeOffset? activationDate = null, int? overwriteSecondsSaved = null, int? overwriteEntries = null);
 
         Task<AnymateResponse> ManualAsync(string payload);
         Task<TResponse> ManualAsync<TResponse>(string payload);
@@ -99,7 +99,7 @@ namespace Anymate
         string GetRules(string processKey);
         string TakeNext(string processKey);
         T TakeNext<T>(string processKey);
-        AnymateResponse CreateTask<T>(T newTask, string processKey);
+        AnymateCreateTaskResponse CreateTask<T>(T newTask, string processKey);
         TResponse CreateTask<TResponse, TModel>(TModel newTask, string processKey);
         TResponse CreateTask<TResponse>(string payload, string processKey);
         AnymateResponse UpdateTask<T>(T updateTask);
@@ -118,14 +118,13 @@ namespace Anymate
         AnymateResponse Error(long taskId, string reason = null, string comment = null,
             int? overwriteSecondsSaved = null, int? overwriteEntries = null);
 
-        AnymateResponse Retry(AnymateTaskAction action);
+        AnymateResponse Retry(AnymateRetryTaskAction action);
         AnymateResponse Retry(string payload);
         TResponse Retry<TResponse>(string payload);
         TResponse Retry<TResponse, TAction>(TAction action);
         AnymateResponse Retry<T>(T action);
 
-        AnymateResponse Retry(long taskId, string reason = null, string comment = null,
-            int? overwriteSecondsSaved = null, int? overwriteEntries = null);
+        AnymateResponse Retry(long taskId, string reason = null, string comment = null, DateTimeOffset? activationDate = null, int? overwriteSecondsSaved = null, int? overwriteEntries = null);
 
         AnymateResponse Manual(string payload);
         TResponse Manual<TResponse>(string payload);

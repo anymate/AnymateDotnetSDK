@@ -410,9 +410,9 @@ namespace Anymate
             return result;
         }
 
-        public async Task<AnymateResponse> CreateTaskAsync<T>(T newTask, string processKey)
+        public async Task<AnymateCreateTaskResponse> CreateTaskAsync<T>(T newTask, string processKey)
         {
-            return await CreateTaskAsync<AnymateResponse, T>(newTask, processKey);
+            return await CreateTaskAsync<AnymateCreateTaskResponse, T>(newTask, processKey);
         }
 
         public async Task<TResponse> CreateTaskAsync<TResponse, TModel>(TModel newTask, string processKey)
@@ -517,9 +517,9 @@ namespace Anymate
             return await ErrorAsync(action);
         }
 
-        public async Task<AnymateResponse> RetryAsync(AnymateTaskAction action)
+        public async Task<AnymateResponse> RetryAsync(AnymateRetryTaskAction action)
         {
-            return await RetryAsync<AnymateTaskAction>(action);
+            return await RetryAsync<AnymateRetryTaskAction>(action);
         }
 
         public async Task<AnymateResponse> RetryAsync(string payload)
@@ -545,16 +545,17 @@ namespace Anymate
             return await RetryAsync<AnymateResponse, T>(action);
         }
 
-        public async Task<AnymateResponse> RetryAsync(long taskId, string reason = null, string comment = null,
+        public async Task<AnymateResponse> RetryAsync(long taskId, string reason = null, string comment = null, DateTimeOffset? activationDate = null,
             int? overwriteSecondsSaved = null, int? overwriteEntries = null)
         {
-            var action = new AnymateTaskAction()
+            var action = new AnymateRetryTaskAction()
             {
                 TaskId = taskId,
                 Reason = reason,
                 Comment = comment,
                 OverwriteEntries = overwriteEntries,
-                OverwriteSecondsSaved = overwriteSecondsSaved
+                OverwriteSecondsSaved = overwriteSecondsSaved,
+                ActivationDate = activationDate
             };
             return await RetryAsync(action);
         }
@@ -768,9 +769,9 @@ namespace Anymate
             return result;
         }
 
-        public AnymateResponse CreateTask<T>(T newTask, string processKey)
+        public AnymateCreateTaskResponse CreateTask<T>(T newTask, string processKey)
         {
-            return CreateTask<AnymateResponse, T>(newTask, processKey);
+            return CreateTask<AnymateCreateTaskResponse, T>(newTask, processKey);
         }
 
         public TResponse CreateTask<TResponse, TModel>(TModel newTask, string processKey)
@@ -874,9 +875,9 @@ namespace Anymate
             return Error(action);
         }
 
-        public AnymateResponse Retry(AnymateTaskAction action)
+        public AnymateResponse Retry(AnymateRetryTaskAction action)
         {
-            return Retry<AnymateTaskAction>(action);
+            return Retry<AnymateRetryTaskAction>(action);
         }
 
         public AnymateResponse Retry(string payload)
@@ -902,16 +903,16 @@ namespace Anymate
             return Retry<AnymateResponse, T>(action);
         }
 
-        public AnymateResponse Retry(long taskId, string reason = null, string comment = null,
-            int? overwriteSecondsSaved = null, int? overwriteEntries = null)
+        public AnymateResponse Retry(long taskId, string reason = null, string comment = null, DateTimeOffset? activationDate = null, int? overwriteSecondsSaved = null, int? overwriteEntries = null)
         {
-            var action = new AnymateTaskAction()
+            var action = new AnymateRetryTaskAction()
             {
                 TaskId = taskId,
                 Reason = reason,
                 Comment = comment,
                 OverwriteEntries = overwriteEntries,
-                OverwriteSecondsSaved = overwriteSecondsSaved
+                OverwriteSecondsSaved = overwriteSecondsSaved,
+                ActivationDate = activationDate
             };
             return Retry(action);
         }
