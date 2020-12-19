@@ -1,5 +1,7 @@
 ﻿
 using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
 
 namespace Anymate
@@ -34,6 +36,10 @@ namespace Anymate
         Task<AnymateCreateTaskResponse> CreateTaskAsync<T>(T newTask, string processKey);
         Task<TResponse> CreateTaskAsync<TResponse, TModel>(TModel newTask, string processKey);
         Task<TResponse> CreateTaskAsync<TResponse>(string payload, string processKey);
+        Task<AnymateCreateTasksResponse> CreateTasksAsync<T>(IEnumerable<T> newTasks, string processKey);
+        Task<AnymateCreateTasksResponse> CreateTasksAsync(DataTable dt, string processKey);
+        Task<TResponse> CreateTasksAsync<TResponse, TModel>(IEnumerable<TModel> newTask, string processKey);
+        Task<TResponse> CreateTasksAsync<TResponse>(string payload, string processKey);
         Task<AnymateResponse> UpdateTaskAsync<T>(T updateTask);
         Task<TResponse> UpdateTaskAsync<TResponse>(string payload);
         Task<TResponse> UpdateTaskAsync<TResponse, TUpdate>(TUpdate updateTask);
@@ -102,6 +108,10 @@ namespace Anymate
         AnymateCreateTaskResponse CreateTask<T>(T newTask, string processKey);
         TResponse CreateTask<TResponse, TModel>(TModel newTask, string processKey);
         TResponse CreateTask<TResponse>(string payload, string processKey);
+        AnymateCreateTasksResponse CreateTasks<T>(IEnumerable<T> newTasks, string processKey);
+        AnymateCreateTasksResponse CreateTasks(DataTable dt, string processKey);
+        TResponse CreateTasks<TResponse, TModel>(IEnumerable<TModel> newTask, string processKey);
+        TResponse CreateTasks<TResponse>(string payload, string processKey);
         AnymateResponse UpdateTask<T>(T updateTask);
         TResponse UpdateTask<TResponse>(string payload);
         TResponse UpdateTask<TResponse, TUpdate>(TUpdate updateTask);

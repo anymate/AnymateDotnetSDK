@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO.Pipes;
 using System.Linq;
@@ -321,7 +322,7 @@ namespace Anymate
         public async Task<AnymateResponse> FailureAsync(string processKey, string message)
         {
             return await FailureAsync(new AnymateProcessFailure()
-                {ProcessKey = processKey, Message = message});
+            { ProcessKey = processKey, Message = message });
         }
 
         public async Task<AnymateResponse> FinishRunAsync(string payload)
@@ -356,7 +357,7 @@ namespace Anymate
             int? overwriteEntries = null)
         {
             return await FinishRunAsync(new AnymateFinishRun()
-                {RunId = runId, OverwriteEntries = overwriteEntries, OverwriteSecondsSaved = overwriteSecondsSaved});
+            { RunId = runId, OverwriteEntries = overwriteEntries, OverwriteSecondsSaved = overwriteSecondsSaved });
         }
 
         public async Task<AnymateRunResponse> StartOrGetRunAsync(string processKey)
@@ -421,10 +422,36 @@ namespace Anymate
             return await CreateTaskAsync<TResponse>(payload, processKey);
         }
 
-        
+
         public async Task<TResponse> CreateTaskAsync<TResponse>(string payload, string processKey)
         {
             var endpoint = $"/api/CreateTask/{processKey}";
+            var response = await CallApiPostAsync(endpoint, payload);
+            return JsonConvert.DeserializeObject<TResponse>(response);
+        }
+
+        public async Task<AnymateCreateTasksResponse> CreateTasksAsync<T>(IEnumerable<T> newTasks, string processKey)
+        {
+            return await CreateTasksAsync<AnymateCreateTasksResponse, T>(newTasks, processKey);
+        }
+
+        public async Task<AnymateCreateTasksResponse> CreateTasksAsync(DataTable dt, string processKey)
+        {
+            var payload = JsonConvert.SerializeObject(dt);
+            return await CreateTasksAsync<AnymateCreateTasksResponse>(payload, processKey);
+        }
+
+
+        public async Task<TResponse> CreateTasksAsync<TResponse, TModel>(IEnumerable<TModel> newTask, string processKey)
+        {
+            var payload = JsonConvert.SerializeObject(newTask);
+            return await CreateTasksAsync<TResponse>(payload, processKey);
+        }
+
+
+        public async Task<TResponse> CreateTasksAsync<TResponse>(string payload, string processKey)
+        {
+            var endpoint = $"/api/CreateTasks/{processKey}";
             var response = await CallApiPostAsync(endpoint, payload);
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
@@ -474,7 +501,7 @@ namespace Anymate
             var response = JsonConvert.DeserializeObject<TResponse>(jsonResult);
             return response;
         }
-        
+
         public async Task<T> ErrorAsync<T>(string payload)
         {
             var endpoint = $"/api/Error/";
@@ -679,7 +706,7 @@ namespace Anymate
         public AnymateResponse Failure(string processKey, string message)
         {
             return Failure(new AnymateProcessFailure()
-                {ProcessKey = processKey, Message = message});
+            { ProcessKey = processKey, Message = message });
         }
 
 
@@ -715,7 +742,7 @@ namespace Anymate
             int? overwriteEntries = null)
         {
             return FinishRun(new AnymateFinishRun()
-                {RunId = runId, OverwriteEntries = overwriteEntries, OverwriteSecondsSaved = overwriteSecondsSaved});
+            { RunId = runId, OverwriteEntries = overwriteEntries, OverwriteSecondsSaved = overwriteSecondsSaved });
         }
 
         public AnymateRunResponse StartOrGetRun(string processKey)
@@ -787,6 +814,33 @@ namespace Anymate
             return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
+
+        public AnymateCreateTasksResponse CreateTasks<T>(IEnumerable<T> newTasks, string processKey)
+        {
+            return CreateTasks<AnymateCreateTasksResponse, T>(newTasks, processKey);
+        }
+
+        public AnymateCreateTasksResponse CreateTasks(DataTable dt, string processKey)
+        {
+            var payload = JsonConvert.SerializeObject(dt);
+            return CreateTasks<AnymateCreateTasksResponse>(payload, processKey);
+        }
+
+
+        public TResponse CreateTasks<TResponse, TModel>(IEnumerable<TModel> newTask, string processKey)
+        {
+            var payload = JsonConvert.SerializeObject(newTask);
+            return CreateTasks<TResponse>(payload, processKey);
+        }
+
+
+        public TResponse CreateTasks<TResponse>(string payload, string processKey)
+        {
+            var endpoint = $"/api/CreateTasks/{processKey}";
+            var response = CallApiPost(endpoint, payload);
+            return JsonConvert.DeserializeObject<TResponse>(response);
+        }
+
         public AnymateResponse UpdateTask<T>(T updateTask)
         {
             return UpdateTask<AnymateResponse, T>(updateTask);
@@ -832,7 +886,7 @@ namespace Anymate
             var response = JsonConvert.DeserializeObject<TResponse>(jsonResult);
             return response;
         }
-        
+
         public T Error<T>(string payload)
         {
             var endpoint = $"/api/Error/";
