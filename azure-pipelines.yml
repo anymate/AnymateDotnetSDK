@@ -3,9 +3,9 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 variables:
-  Major: '0'
-  Minor: '1'
-  Patch: '0'
+  Major: '1'
+  Minor: '0'
+  Patch: '1'
 
 trigger:
 - master
