@@ -248,12 +248,14 @@ namespace Anymate
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 client.Timeout = TimeSpan.FromMinutes(5);
-                using (HttpResponseMessage response =
-                    await client.PostAsync(GetAnymateUrl(customerKey) + endpoint, content))
-                using (HttpContent responseContent = response.Content)
+                using (HttpResponseMessage response = await client.PostAsync(GetAnymateUrl(customerKey) + endpoint, content))
                 {
-                    string data = await responseContent.ReadAsStringAsync();
-                    return data;
+                    var responseMessage = response.EnsureSuccessStatusCode();
+                    using (HttpContent responseContent = response.Content)
+                    {
+                        string data = await responseContent.ReadAsStringAsync();
+                        return data;
+                    }
                 }
             }
         }
@@ -275,10 +277,13 @@ namespace Anymate
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 client.Timeout = TimeSpan.FromMinutes(5);
                 using (HttpResponseMessage response = await client.GetAsync(GetAnymateUrl(customerKey) + endpoint))
-                using (HttpContent responseContent = response.Content)
                 {
-                    string data = await responseContent.ReadAsStringAsync();
-                    return data;
+                    var responseMessage = response.EnsureSuccessStatusCode();
+                    using (HttpContent responseContent = response.Content)
+                    {
+                        string data = await responseContent.ReadAsStringAsync();
+                        return data;
+                    }
                 }
             }
         }
