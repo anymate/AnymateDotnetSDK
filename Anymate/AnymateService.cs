@@ -20,6 +20,8 @@ namespace Anymate
         // In order to combat these problems, we have gone with a single HttpClient in AnymateService.
         // We have followed the guidelines described here: https://docs.microsoft.com/en-us/dotnet/csharp/tutorials/console-webapiclient
         // If this does not solve the problems of HttpClient, we will switch to RestSharp.
+        // Google keywords are : HttpClient, HttpClientFactory, Socket Exhaustion
+        // Exception was: an existing connection was forcibly closed by the remote host
 
         private static readonly HttpClient _httpClient = new HttpClient();
 
