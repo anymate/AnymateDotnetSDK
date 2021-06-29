@@ -1,4 +1,5 @@
-﻿namespace Anymate
+﻿
+namespace Anymate
 {
     public class AuthTokenRequest
     {
@@ -19,5 +20,16 @@
         public string username { get; set; }
         public string password { get; set; }
 
+
+        public static AuthTokenRequest MapFromCredentials(AnymateCredentials credentials)
+        {
+            return new AuthTokenRequest()
+            {
+                client_id = credentials.CustomerKey,
+                client_secret = credentials.Secret,
+                password = credentials.Password,
+                username = credentials.Username
+            };
+        }
     }
 }

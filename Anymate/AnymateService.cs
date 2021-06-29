@@ -61,6 +61,34 @@ namespace Anymate
             return true;
         }
 
+
+        /// <summary>
+        /// This is the way you would use AnymateService with Dependency Injection. 
+        /// It can also be used if you already have a Singleton HttpClient pattern in place in your application.
+        /// </summary>
+        /// <remarks>
+        /// In order to use it, you must register HttpClientFactory and AnymateCredentials with your IServiceCollection 
+        /// This is done with the following code:
+        /// services.AddHttpClient();
+        /// services.AddSingleton<AnymateCredentials>(sp => new AnymateCredentials("yourCustomerKey", "yourSecret", "yourUsername", "yourPassword"));
+        /// 
+        /// Alternative is to use it with a normal Singleton HttpClient. It has some disadvantages, primarily that DNS data is cached and will never be updated unless you reboot your app.
+        /// In this scenario, you will create a HttpClient singleton when starting the application and pass it into any AnymateService's you make. AnymateService will re-use this one and we will avoid Socket Exhuastion.
+        /// 
+        /// Please read here for futher details: https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests#benefits-of-using-ihttpclientfactory
+        /// 
+        /// </remarks>
+        public AnymateService(AnymateCredentials credentials, HttpClient httpClient)
+        {
+            OnPremisesMode = false;
+            _request = AuthTokenRequest.MapFromCredentials(credentials);
+
+            _httpClient = httpClient;
+            _httpClient.Timeout = TimeSpan.FromMinutes(5);
+
+        }
+
+
         /// <summary>
         /// This is the default way of using the AnymateClient. It assumes you are using the cloud version of Anymate.
         /// </summary>
