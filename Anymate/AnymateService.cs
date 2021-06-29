@@ -90,6 +90,22 @@ namespace Anymate
 
 
         /// <summary>
+        /// This is the OnPremises implementation for using AnymateService with DependencyInjection/Singleton pattern. Please see the cloud implementation for details.
+        /// </summary>
+        public AnymateService(AnymateCredentialsOnPremisesMode credentials, HttpClient httpClient)
+        {
+            OnPremisesMode = true;
+            _request = AuthTokenRequest.MapFromCredentials(credentials);
+
+            _httpClient = httpClient;
+            _httpClient.Timeout = TimeSpan.FromMinutes(5);
+            OnPremisesApiUrl = credentials.ClientUri;
+            OnPremisesAuthUrl = credentials.AuthUri;
+
+        }
+
+
+        /// <summary>
         /// This is the default way of using the AnymateClient. It assumes you are using the cloud version of Anymate.
         /// </summary>
         /// <remarks>
