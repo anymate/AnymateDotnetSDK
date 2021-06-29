@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IdentityModel.Tokens.Jwt;
-using System.IO.Pipes;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using System.Text.Json;
+using System.Threading;
+using Newtonsoft.Json;
 
 namespace Anymate
 {
@@ -23,7 +23,7 @@ namespace Anymate
         // Google keywords are : HttpClient, HttpClientFactory, Socket Exhaustion
         // Exception was: an existing connection was forcibly closed by the remote host
 
-        private static readonly HttpClient _httpClient = new HttpClient();
+        private HttpClient _httpClient;
 
         private static string AnymateUrl(string customerKey) => $"https://{customerKey}.anymate.app";
         private static string AnymateAuthUrl(string customerKey) => $"https://{customerKey}.auth.anymate.app";
@@ -77,6 +77,9 @@ namespace Anymate
                 password = password,
                 username = username
             };
+            _httpClient =  new HttpClient();
+            _httpClient.Timeout = TimeSpan.FromMinutes(5);
+
         }
 
 
@@ -109,6 +112,8 @@ namespace Anymate
 
             OnPremisesApiUrl = clientUri;
             OnPremisesAuthUrl = authUri;
+            _httpClient = new HttpClient();
+            _httpClient.Timeout = TimeSpan.FromMinutes(5);
         }
 
         private string GetAnymateUrl(string customerKey)
@@ -205,22 +210,21 @@ namespace Anymate
             var values = formData;
 
             var content = new FormUrlEncodedContent(values);
+            
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{GetAuthUrl(customerKey)}/connect/token");
+            request.Headers.Accept.Clear();
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Content = content;
+           
 
-
-
-
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.Timeout = TimeSpan.FromMinutes(5);
-            using (HttpResponseMessage response =
-                await _httpClient.PostAsync($"{GetAuthUrl(customerKey)}/connect/token", content))
+            using (HttpResponseMessage response = await _httpClient.SendAsync(request, CancellationToken.None))
             {
                 using (HttpContent responseContent = response.Content)
                 {
                     if (response.IsSuccessStatusCode)
                     {
                         string data = await responseContent.ReadAsStringAsync();
-                        var json = JsonSerializer.Deserialize<AuthResponse>(data);
+                        var json = JsonConvert.DeserializeObject<AuthResponse>(data);
                         json.HttpMessage = $"{response.StatusCode} - {response.ReasonPhrase}";
                         _request.access_token = json.access_token;
                         return json;
@@ -257,12 +261,14 @@ namespace Anymate
             var customerKey = GetCustomerKeyFromToken(_request.access_token);
             var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-            _httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", _request.access_token);
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.Timeout = TimeSpan.FromMinutes(5);
-            using (HttpResponseMessage response = await _httpClient.PostAsync(GetAnymateUrl(customerKey) + endpoint, content))
+            var request = new HttpRequestMessage(HttpMethod.Post, GetAnymateUrl(customerKey) + endpoint);
+            request.Headers.Accept.Clear();
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _request.access_token);
+            request.Content = content;
+
+           
+            using (HttpResponseMessage response = await _httpClient.SendAsync(request, CancellationToken.None))
             {
                 var responseMessage = response.EnsureSuccessStatusCode();
                 using (HttpContent responseContent = response.Content)
@@ -284,12 +290,12 @@ namespace Anymate
             await GetOrRefreshAccessTokenAsync();
             var customerKey = GetCustomerKeyFromToken(_request.access_token);
 
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", _request.access_token);
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.Timeout = TimeSpan.FromMinutes(5);
-            using (HttpResponseMessage response = await _httpClient.GetAsync(GetAnymateUrl(customerKey) + endpoint))
+            var request = new HttpRequestMessage(HttpMethod.Get, GetAnymateUrl(customerKey) + endpoint);
+            request.Headers.Accept.Clear();
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _request.access_token);
+
+            using (HttpResponseMessage response = await _httpClient.SendAsync(request, CancellationToken.None))
             {
                 var responseMessage = response.EnsureSuccessStatusCode();
                 using (HttpContent responseContent = response.Content)
@@ -318,7 +324,7 @@ namespace Anymate
         {
             var endpoint = $"/api/Failure/";
             var response = await CallApiPostAsync(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public async Task<AnymateResponse> FailureAsync(AnymateProcessFailure action)
@@ -333,7 +339,7 @@ namespace Anymate
 
         public async Task<TResponse> FailureAsync<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return await FailureAsync<TResponse>(payload);
         }
 
@@ -352,7 +358,7 @@ namespace Anymate
         {
             var endpoint = $"/api/FinishRun/";
             var response = await CallApiPostAsync(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public async Task<AnymateResponse> FinishRunAsync(AnymateFinishRun action)
@@ -367,7 +373,7 @@ namespace Anymate
 
         public async Task<TResponse> FinishRunAsync<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return await FinishRunAsync<TResponse>(payload);
         }
 
@@ -387,14 +393,14 @@ namespace Anymate
         {
             var endpoint = $"/api/StartOrGetRun/{processKey}";
             var response = await CallApiGetAsync(endpoint);
-            return JsonSerializer.Deserialize<T>(response);
+            return JsonConvert.DeserializeObject<T>(response);
         }
 
         public async Task<T> OkToRunAsync<T>(string processKey)
         {
             var endpoint = $"/api/OkToRun/{processKey}";
             var response = await CallApiGetAsync(endpoint);
-            return JsonSerializer.Deserialize<T>(response);
+            return JsonConvert.DeserializeObject<T>(response);
         }
 
         public async Task<AnymateOkToRun> OkToRunAsync(string processKey)
@@ -406,7 +412,7 @@ namespace Anymate
         public async Task<T> GetRulesAsync<T>(string processKey)
         {
             var jsonResult = await GetRulesAsync(processKey);
-            var result = JsonSerializer.Deserialize<T>(jsonResult);
+            var result = JsonConvert.DeserializeObject<T>(jsonResult);
             return result;
         }
 
@@ -425,7 +431,7 @@ namespace Anymate
         public async Task<T> TakeNextAsync<T>(string processKey)
         {
             var jsonResult = await TakeNextAsync(processKey);
-            var result = JsonSerializer.Deserialize<T>(jsonResult);
+            var result = JsonConvert.DeserializeObject<T>(jsonResult);
             return result;
         }
 
@@ -436,7 +442,7 @@ namespace Anymate
 
         public async Task<TResponse> CreateTaskAsync<TResponse, TModel>(TModel newTask, string processKey)
         {
-            var payload = JsonSerializer.Serialize(newTask);
+            var payload = JsonConvert.SerializeObject(newTask);
             return await CreateTaskAsync<TResponse>(payload, processKey);
         }
 
@@ -445,7 +451,7 @@ namespace Anymate
         {
             var endpoint = $"/api/CreateTask/{processKey}";
             var response = await CallApiPostAsync(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public async Task<AnymateCreateTasksResponse> CreateTasksAsync<T>(IEnumerable<T> newTasks, string processKey)
@@ -455,14 +461,14 @@ namespace Anymate
 
         public async Task<AnymateCreateTasksResponse> CreateTasksAsync(DataTable dt, string processKey)
         {
-            var payload = JsonSerializer.Serialize(dt);
+            var payload = JsonConvert.SerializeObject(dt);
             return await CreateTasksAsync<AnymateCreateTasksResponse>(payload, processKey);
         }
 
 
         public async Task<TResponse> CreateTasksAsync<TResponse, TModel>(IEnumerable<TModel> newTask, string processKey)
         {
-            var payload = JsonSerializer.Serialize(newTask);
+            var payload = JsonConvert.SerializeObject(newTask);
             return await CreateTasksAsync<TResponse>(payload, processKey);
         }
 
@@ -471,7 +477,7 @@ namespace Anymate
         {
             var endpoint = $"/api/CreateTasks/{processKey}";
             var response = await CallApiPostAsync(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public async Task<AnymateResponse> UpdateTaskAsync<T>(T updateTask)
@@ -484,25 +490,25 @@ namespace Anymate
             var endpoint = $"/api/UpdateTask/";
 
             var response = await CallApiPostAsync(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public async Task<TResponse> UpdateTaskAsync<TResponse, TUpdate>(TUpdate updateTask)
         {
-            var payload = JsonSerializer.Serialize(updateTask);
+            var payload = JsonConvert.SerializeObject(updateTask);
             return await UpdateTaskAsync<TResponse>(payload);
         }
 
         public async Task<TResponse> CreateAndTakeTaskAsync<TResponse, TCreate>(TCreate newTask, string processKey)
         {
             var jsonResult = await CreateAndTakeTaskAsync<TCreate>(newTask, processKey);
-            var response = JsonSerializer.Deserialize<TResponse>(jsonResult);
+            var response = JsonConvert.DeserializeObject<TResponse>(jsonResult);
             return response;
         }
 
         public async Task<string> CreateAndTakeTaskAsync<T>(T newTask, string processKey)
         {
-            var payload = JsonSerializer.Serialize(newTask);
+            var payload = JsonConvert.SerializeObject(newTask);
             return await CreateAndTakeTaskAsync(payload, processKey);
         }
 
@@ -516,7 +522,7 @@ namespace Anymate
         public async Task<TResponse> CreateAndTakeTaskAsync<TResponse>(object newTask, string processKey)
         {
             var jsonResult = await CreateAndTakeTaskAsync(newTask, processKey);
-            var response = JsonSerializer.Deserialize<TResponse>(jsonResult);
+            var response = JsonConvert.DeserializeObject<TResponse>(jsonResult);
             return response;
         }
 
@@ -524,7 +530,7 @@ namespace Anymate
         {
             var endpoint = $"/api/Error/";
             var response = await CallApiPostAsync(endpoint, payload);
-            return JsonSerializer.Deserialize<T>(response);
+            return JsonConvert.DeserializeObject<T>(response);
         }
 
         public async Task<AnymateResponse> ErrorAsync(string payload)
@@ -544,7 +550,7 @@ namespace Anymate
 
         public async Task<TResponse> ErrorAsync<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return await ErrorAsync<TResponse>(payload);
         }
 
@@ -576,12 +582,12 @@ namespace Anymate
         {
             var endpoint = $"/api/Retry/";
             var response = await CallApiPostAsync(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public async Task<TResponse> RetryAsync<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return await RetryAsync<TResponse>(payload);
         }
 
@@ -614,7 +620,7 @@ namespace Anymate
         {
             var endpoint = $"/api/Manual/";
             var response = await CallApiPostAsync(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public async Task<AnymateResponse> ManualAsync(AnymateTaskAction action)
@@ -629,7 +635,7 @@ namespace Anymate
 
         public async Task<TResponse> ManualAsync<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return await ManualAsync<TResponse>(payload);
         }
 
@@ -656,7 +662,7 @@ namespace Anymate
         {
             var endpoint = $"/api/Solved/";
             var response = await CallApiPostAsync(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public async Task<AnymateResponse> SolvedAsync(AnymateTaskAction action)
@@ -671,7 +677,7 @@ namespace Anymate
 
         public async Task<TResponse> SolvedAsync<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return await SolvedAsync<TResponse>(payload);
         }
 
@@ -702,7 +708,7 @@ namespace Anymate
         {
             var endpoint = $"/api/Failure/";
             var response = CallApiPost(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public AnymateResponse Failure(AnymateProcessFailure action)
@@ -717,7 +723,7 @@ namespace Anymate
 
         public TResponse Failure<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return Failure<TResponse>(payload);
         }
 
@@ -737,7 +743,7 @@ namespace Anymate
         {
             var endpoint = $"/api/FinishRun/";
             var response = CallApiPost(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public AnymateResponse FinishRun(AnymateFinishRun action)
@@ -752,7 +758,7 @@ namespace Anymate
 
         public TResponse FinishRun<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return FinishRun<TResponse>(payload);
         }
 
@@ -772,14 +778,14 @@ namespace Anymate
         {
             var endpoint = $"/api/StartOrGetRun/{processKey}";
             var response = CallApiGet(endpoint);
-            return JsonSerializer.Deserialize<T>(response);
+            return JsonConvert.DeserializeObject<T>(response);
         }
 
         public T OkToRun<T>(string processKey)
         {
             var endpoint = $"/api/OkToRun/{processKey}";
             var response = CallApiGet(endpoint);
-            return JsonSerializer.Deserialize<T>(response);
+            return JsonConvert.DeserializeObject<T>(response);
         }
 
         public AnymateOkToRun OkToRun(string processKey)
@@ -791,7 +797,7 @@ namespace Anymate
         public T GetRules<T>(string processKey)
         {
             var jsonResult = GetRules(processKey);
-            var result = JsonSerializer.Deserialize<T>(jsonResult);
+            var result = JsonConvert.DeserializeObject<T>(jsonResult);
             return result;
         }
 
@@ -810,7 +816,7 @@ namespace Anymate
         public T TakeNext<T>(string processKey)
         {
             var jsonResult = TakeNext(processKey);
-            var result = JsonSerializer.Deserialize<T>(jsonResult);
+            var result = JsonConvert.DeserializeObject<T>(jsonResult);
             return result;
         }
 
@@ -821,7 +827,7 @@ namespace Anymate
 
         public TResponse CreateTask<TResponse, TModel>(TModel newTask, string processKey)
         {
-            var payload = JsonSerializer.Serialize(newTask);
+            var payload = JsonConvert.SerializeObject(newTask);
             return CreateTask<TResponse>(payload, processKey);
         }
 
@@ -829,7 +835,7 @@ namespace Anymate
         {
             var endpoint = $"/api/CreateTask/{processKey}";
             var response = CallApiPost(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
 
@@ -840,14 +846,14 @@ namespace Anymate
 
         public AnymateCreateTasksResponse CreateTasks(DataTable dt, string processKey)
         {
-            var payload = JsonSerializer.Serialize(dt);
+            var payload = JsonConvert.SerializeObject(dt);
             return CreateTasks<AnymateCreateTasksResponse>(payload, processKey);
         }
 
 
         public TResponse CreateTasks<TResponse, TModel>(IEnumerable<TModel> newTask, string processKey)
         {
-            var payload = JsonSerializer.Serialize(newTask);
+            var payload = JsonConvert.SerializeObject(newTask);
             return CreateTasks<TResponse>(payload, processKey);
         }
 
@@ -856,7 +862,7 @@ namespace Anymate
         {
             var endpoint = $"/api/CreateTasks/{processKey}";
             var response = CallApiPost(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public AnymateResponse UpdateTask<T>(T updateTask)
@@ -869,18 +875,18 @@ namespace Anymate
             var endpoint = $"/api/UpdateTask/";
 
             var response = CallApiPost(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public TResponse UpdateTask<TResponse, TUpdate>(TUpdate updateTask)
         {
-            var payload = JsonSerializer.Serialize(updateTask);
+            var payload = JsonConvert.SerializeObject(updateTask);
             return UpdateTask<TResponse>(payload);
         }
 
         public string CreateAndTakeTask<T>(T newTask, string processKey)
         {
-            var payload = JsonSerializer.Serialize(newTask);
+            var payload = JsonConvert.SerializeObject(newTask);
             return CreateAndTakeTask(payload, processKey);
         }
 
@@ -894,14 +900,14 @@ namespace Anymate
         public TResponse CreateAndTakeTask<TResponse, TCreate>(TCreate newTask, string processKey)
         {
             var jsonResult = CreateAndTakeTask(newTask, processKey);
-            var response = JsonSerializer.Deserialize<TResponse>(jsonResult);
+            var response = JsonConvert.DeserializeObject<TResponse>(jsonResult);
             return response;
         }
 
         public TResponse CreateAndTakeTask<TResponse>(object newTask, string processKey)
         {
             var jsonResult = CreateAndTakeTask(newTask, processKey);
-            var response = JsonSerializer.Deserialize<TResponse>(jsonResult);
+            var response = JsonConvert.DeserializeObject<TResponse>(jsonResult);
             return response;
         }
 
@@ -909,7 +915,7 @@ namespace Anymate
         {
             var endpoint = $"/api/Error/";
             var response = CallApiPost(endpoint, payload);
-            return JsonSerializer.Deserialize<T>(response);
+            return JsonConvert.DeserializeObject<T>(response);
         }
 
         public AnymateResponse Error(string payload)
@@ -929,7 +935,7 @@ namespace Anymate
 
         public TResponse Error<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return Error<TResponse>(payload);
         }
 
@@ -961,12 +967,12 @@ namespace Anymate
         {
             var endpoint = $"/api/Retry/";
             var response = CallApiPost(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public TResponse Retry<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return Retry<TResponse>(payload);
         }
 
@@ -998,7 +1004,7 @@ namespace Anymate
         {
             var endpoint = $"/api/Manual/";
             var response = CallApiPost(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public AnymateResponse Manual(AnymateTaskAction action)
@@ -1013,7 +1019,7 @@ namespace Anymate
 
         public TResponse Manual<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return Manual<TResponse>(payload);
         }
 
@@ -1040,7 +1046,7 @@ namespace Anymate
         {
             var endpoint = $"/api/Solved/";
             var response = CallApiPost(endpoint, payload);
-            return JsonSerializer.Deserialize<TResponse>(response);
+            return JsonConvert.DeserializeObject<TResponse>(response);
         }
 
         public AnymateResponse Solved(AnymateTaskAction action)
@@ -1055,7 +1061,7 @@ namespace Anymate
 
         public TResponse Solved<TResponse, TAction>(TAction action)
         {
-            var payload = JsonSerializer.Serialize(action);
+            var payload = JsonConvert.SerializeObject(action);
             return Solved<TResponse>(payload);
         }
 

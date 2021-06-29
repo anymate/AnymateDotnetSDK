@@ -8,15 +8,16 @@
     <Description>a plug-and-play Anymate Api Client, making interaction with anymate.app simple and easy. Please visit https://www.anymate.io for more information.</Description>
     <Copyright>Anymate ApS</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <AssemblyVersion>1.0.3</AssemblyVersion>
-    <FileVersion>1.0.3</FileVersion>
-    <Version>1.0.3</Version>
+    <AssemblyVersion>1.0.3.3</AssemblyVersion>
+    <FileVersion>1.0.3.3</FileVersion>
+    <Version>1.0.3.3</Version>
     <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp5.0</TargetFrameworks>
     <LangVersion>9</LangVersion>
     
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.11.1" />
     <PackageReference Include="System.Text.Json" Version="5.0.2" />
   </ItemGroup>
